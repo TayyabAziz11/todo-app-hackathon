@@ -1,0 +1,11 @@
+# Development dependencies for Phase 1 - In-Memory Todo CLI
+# Python 3.13+ required
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code Quality (optional for future phases)
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0

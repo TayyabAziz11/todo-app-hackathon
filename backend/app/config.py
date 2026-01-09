@@ -43,16 +43,21 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
-        """Validate DATABASE_URL is set and looks like a PostgreSQL URL."""
+        """Validate DATABASE_URL is set and convert to use psycopg2 driver."""
         if not v:
             print("FATAL: DATABASE_URL environment variable is required", file=sys.stderr)
             sys.exit(1)
-        if not v.startswith(("postgresql://", "postgresql+psycopg://", "postgres://")):
+        if not v.startswith(("postgresql://", "postgresql+psycopg2://", "postgresql+psycopg://", "postgres://")):
             print("FATAL: DATABASE_URL must be a PostgreSQL connection string", file=sys.stderr)
             sys.exit(1)
-        # Railway and some providers use postgres:// but SQLAlchemy needs postgresql://
+        # Normalize all PostgreSQL URLs to use psycopg2 driver explicitly
+        # Railway uses postgres://, others may use postgresql:// or postgresql+psycopg://
         if v.startswith("postgres://"):
-            v = v.replace("postgres://", "postgresql://", 1)
+            v = v.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif v.startswith("postgresql+psycopg://"):
+            v = v.replace("postgresql+psycopg://", "postgresql+psycopg2://", 1)
+        elif v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+psycopg2://", 1)
         return v
 
     @field_validator("JWT_SECRET_KEY")

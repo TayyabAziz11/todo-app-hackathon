@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
-from typing import Optional
+from typing import Optional, List
 import logging
 import os
 
@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     # Database - Optional at startup, required for DB operations
     DATABASE_URL: Optional[str] = None
 
-    # CORS
-    CORS_ORIGINS: str = "http://localhost:3000"
+    # CORS - List of allowed origins
+    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     # Auth - JWT - Optional at startup, required for auth operations
     JWT_SECRET_KEY: Optional[str] = None
@@ -37,23 +37,55 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: Optional[str]) -> Optional[str]:
-        """Convert DATABASE_URL to use psycopg2 driver if set."""
+        """
+        Normalize DATABASE_URL to use psycopg driver for Railway compatibility.
+
+        Railway PostgreSQL uses psycopg v3 by default, not psycopg2.
+        This validator normalizes postgres:// URLs to postgresql+psycopg://.
+        """
         if not v:
             logger.warning("DATABASE_URL not set - database operations will fail")
             return None
 
-        if not v.startswith(("postgresql://", "postgresql+psycopg2://", "postgresql+psycopg://", "postgres://")):
+        if not v.startswith(("postgresql://", "postgresql+psycopg://", "postgresql+psycopg2://", "postgres://")):
             logger.error("DATABASE_URL must be a PostgreSQL connection string")
             return None
 
-        # Normalize all PostgreSQL URLs to use psycopg2 driver explicitly
+        # Normalize Railway's postgres:// to postgresql+psycopg:// (psycopg v3)
         if v.startswith("postgres://"):
-            v = v.replace("postgres://", "postgresql+psycopg2://", 1)
-        elif v.startswith("postgresql+psycopg://"):
-            v = v.replace("postgresql+psycopg://", "postgresql+psycopg2://", 1)
-        elif v.startswith("postgresql://"):
-            v = v.replace("postgresql://", "postgresql+psycopg2://", 1)
+            v = v.replace("postgres://", "postgresql+psycopg://", 1)
+            logger.info("Normalized postgres:// to postgresql+psycopg:// for Railway compatibility")
+        # Also normalize postgresql:// to postgresql+psycopg://
+        elif v.startswith("postgresql://") and "+psycopg" not in v:
+            v = v.replace("postgresql://", "postgresql+psycopg://", 1)
+            logger.info("Normalized postgresql:// to postgresql+psycopg:// for Railway compatibility")
+
         return v
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v) -> List[str]:
+        """
+        Ensure CORS_ORIGINS is a list of strings.
+        Accepts both comma-separated strings and lists.
+        """
+        if v is None:
+            return ["http://localhost:3000"]
+
+        # If it's already a list, return it
+        if isinstance(v, list):
+            return v
+
+        # If it's a string, split by comma
+        if isinstance(v, str):
+            # Handle comma-separated values
+            if "," in v:
+                return [origin.strip() for origin in v.split(",")]
+            # Single value
+            return [v.strip()]
+
+        logger.warning(f"Unexpected CORS_ORIGINS type: {type(v)}, defaulting to localhost")
+        return ["http://localhost:3000"]
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
@@ -136,12 +168,23 @@ class Settings(BaseSettings):
         """Get GitHub OAuth redirect URI, defaulting to FRONTEND_URL + callback path."""
         return self.GITHUB_REDIRECT_URI or f"{self.FRONTEND_URL}/auth/github/callback"
 
+    def get_cors_origins(self) -> List[str]:
+        """
+        Get CORS origins list, including FRONTEND_URL if not already present.
+        This ensures FRONTEND_URL is always allowed.
+        """
+        origins = list(self.CORS_ORIGINS)  # Copy list
+        if self.FRONTEND_URL and self.FRONTEND_URL not in origins:
+            origins.append(self.FRONTEND_URL)
+        return origins
+
 
 # Instantiate settings - app will start even with missing env vars
 # Database/auth operations will fail gracefully if required vars are missing
 try:
     settings = Settings()
     logger.info(f"Settings loaded: APP_ENV={settings.APP_ENV}")
+    logger.info(f"CORS origins configured: {settings.get_cors_origins()}")
     if not settings.DATABASE_URL:
         logger.warning("DATABASE_URL not configured - database features disabled")
     if not settings.JWT_SECRET_KEY:
@@ -152,5 +195,6 @@ except Exception as e:
     settings = Settings(
         DATABASE_URL=None,
         JWT_SECRET_KEY=None,
-        FRONTEND_URL="http://localhost:3000"
+        FRONTEND_URL="http://localhost:3000",
+        CORS_ORIGINS=["http://localhost:3000"]
     )

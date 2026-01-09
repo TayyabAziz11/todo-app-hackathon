@@ -32,11 +32,11 @@ app = FastAPI(
 # =============================================================================
 try:
     from app.config import settings
-    # Use configured frontend URL or fallback to localhost
-    cors_origins = [settings.FRONTEND_URL] if settings.FRONTEND_URL else ["http://localhost:3000"]
+    # Use configured CORS origins from settings
+    cors_origins = settings.get_cors_origins()
     logger.info(f"Configuring CORS for origins: {cors_origins}")
 except Exception as e:
-    logger.warning(f"Could not load FRONTEND_URL from settings: {e}")
+    logger.warning(f"Could not load CORS settings: {e}")
     cors_origins = ["*"]  # Fallback to allow all origins
 
 app.add_middleware(

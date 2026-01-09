@@ -5,7 +5,7 @@ uvicorn[standard]==0.32.0
 # Database (SQLModel + PostgreSQL driver)
 sqlmodel==0.0.22
 sqlalchemy>=2.0.0
-psycopg2-binary==2.9.10
+psycopg[binary]>=3.1
 
 # Authentication
 python-jose[cryptography]==3.3.0

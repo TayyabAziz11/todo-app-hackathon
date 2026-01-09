@@ -15,6 +15,13 @@ from app.config import settings
 from app.auth.exceptions import InvalidTokenError, ExpiredTokenError
 
 
+def _get_jwt_secret() -> str:
+    """Get JWT secret key, raising error if not configured."""
+    if not settings.JWT_SECRET_KEY:
+        raise InvalidTokenError("JWT_SECRET_KEY is not configured")
+    return settings.JWT_SECRET_KEY
+
+
 def create_access_token(user_id: str) -> str:
     """
     Create a JWT access token for the given user.
@@ -48,7 +55,7 @@ def create_access_token(user_id: str) -> str:
     # Encode and sign the token
     encoded_jwt = jwt.encode(
         payload,
-        settings.JWT_SECRET_KEY,
+        _get_jwt_secret(),
         algorithm=settings.JWT_ALGORITHM
     )
 
@@ -84,7 +91,7 @@ def verify_token(token: str) -> str:
         # Decode and verify the token
         payload = jwt.decode(
             token,
-            settings.JWT_SECRET_KEY,
+            _get_jwt_secret(),
             algorithms=[settings.JWT_ALGORITHM]
         )
 

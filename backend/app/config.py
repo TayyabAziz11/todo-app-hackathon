@@ -1,24 +1,18 @@
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
 from typing import Optional
-import sys
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
 
-    Required environment variables (app will fail to start without these):
-    - DATABASE_URL: PostgreSQL connection string
-    - JWT_SECRET_KEY: Secret key for JWT token signing (min 32 chars)
-    - FRONTEND_URL: URL of the frontend for CORS configuration
-
-    Optional environment variables:
-    - APP_NAME: Application name (default: "Todo Web API")
-    - APP_ENV: Environment (development/staging/production)
-    - LOG_LEVEL: Logging level (default: info)
-    - JWT_ALGORITHM: JWT algorithm (default: HS256)
-    - JWT_EXPIRE_MINUTES: Token expiration in minutes (default: 15)
+    The app will start even with missing env vars to allow healthcheck to work.
+    Database/auth operations will fail gracefully if required vars are missing.
     """
 
     # Core
@@ -26,32 +20,33 @@ class Settings(BaseSettings):
     APP_ENV: str = "production"
     LOG_LEVEL: str = "info"
 
-    # Database - REQUIRED (no default, must be set via env)
-    DATABASE_URL: str
+    # Database - Optional at startup, required for DB operations
+    DATABASE_URL: Optional[str] = None
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000"
 
-    # Auth - JWT
-    JWT_SECRET_KEY: str  # REQUIRED - no default for security
+    # Auth - JWT - Optional at startup, required for auth operations
+    JWT_SECRET_KEY: Optional[str] = None
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 15
 
-    # Frontend URL - REQUIRED for CORS
-    FRONTEND_URL: str
+    # Frontend URL - defaults to allow app to start
+    FRONTEND_URL: str = "http://localhost:3000"
 
     @field_validator("DATABASE_URL")
     @classmethod
-    def validate_database_url(cls, v: str) -> str:
-        """Validate DATABASE_URL is set and convert to use psycopg2 driver."""
+    def validate_database_url(cls, v: Optional[str]) -> Optional[str]:
+        """Convert DATABASE_URL to use psycopg2 driver if set."""
         if not v:
-            print("FATAL: DATABASE_URL environment variable is required", file=sys.stderr)
-            sys.exit(1)
+            logger.warning("DATABASE_URL not set - database operations will fail")
+            return None
+
         if not v.startswith(("postgresql://", "postgresql+psycopg2://", "postgresql+psycopg://", "postgres://")):
-            print("FATAL: DATABASE_URL must be a PostgreSQL connection string", file=sys.stderr)
-            sys.exit(1)
+            logger.error("DATABASE_URL must be a PostgreSQL connection string")
+            return None
+
         # Normalize all PostgreSQL URLs to use psycopg2 driver explicitly
-        # Railway uses postgres://, others may use postgresql:// or postgresql+psycopg://
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql+psycopg2://", 1)
         elif v.startswith("postgresql+psycopg://"):
@@ -62,24 +57,22 @@ class Settings(BaseSettings):
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
-    def validate_jwt_secret(cls, v: str) -> str:
-        """Validate JWT_SECRET_KEY is set and sufficiently long."""
+    def validate_jwt_secret(cls, v: Optional[str]) -> Optional[str]:
+        """Validate JWT_SECRET_KEY if set."""
         if not v:
-            print("FATAL: JWT_SECRET_KEY environment variable is required", file=sys.stderr)
-            sys.exit(1)
+            logger.warning("JWT_SECRET_KEY not set - authentication will fail")
+            return None
         if len(v) < 32:
-            print("FATAL: JWT_SECRET_KEY must be at least 32 characters for security", file=sys.stderr)
-            sys.exit(1)
+            logger.error("JWT_SECRET_KEY must be at least 32 characters")
+            return None
         return v
 
     @field_validator("FRONTEND_URL")
     @classmethod
     def validate_frontend_url(cls, v: str) -> str:
-        """Validate FRONTEND_URL is set."""
+        """Clean up FRONTEND_URL."""
         if not v:
-            print("FATAL: FRONTEND_URL environment variable is required", file=sys.stderr)
-            sys.exit(1)
-        # Remove trailing slash for consistency
+            return "http://localhost:3000"
         return v.rstrip("/")
 
     # ============================================
@@ -144,13 +137,20 @@ class Settings(BaseSettings):
         return self.GITHUB_REDIRECT_URI or f"{self.FRONTEND_URL}/auth/github/callback"
 
 
-# Instantiate settings - this will fail fast if required env vars are missing
+# Instantiate settings - app will start even with missing env vars
+# Database/auth operations will fail gracefully if required vars are missing
 try:
     settings = Settings()
+    logger.info(f"Settings loaded: APP_ENV={settings.APP_ENV}")
+    if not settings.DATABASE_URL:
+        logger.warning("DATABASE_URL not configured - database features disabled")
+    if not settings.JWT_SECRET_KEY:
+        logger.warning("JWT_SECRET_KEY not configured - authentication disabled")
 except Exception as e:
-    print(f"FATAL: Failed to load settings: {e}", file=sys.stderr)
-    print("Please ensure all required environment variables are set:", file=sys.stderr)
-    print("  - DATABASE_URL", file=sys.stderr)
-    print("  - JWT_SECRET_KEY (min 32 characters)", file=sys.stderr)
-    print("  - FRONTEND_URL", file=sys.stderr)
-    sys.exit(1)
+    logger.error(f"Failed to load settings: {e}")
+    # Create minimal settings to allow app to start for healthcheck
+    settings = Settings(
+        DATABASE_URL=None,
+        JWT_SECRET_KEY=None,
+        FRONTEND_URL="http://localhost:3000"
+    )

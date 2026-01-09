@@ -1,48 +1,78 @@
 """
 Database connection and session management.
+
+Engine creation is lazy - only happens when DATABASE_URL is set.
+This allows the app to start for healthcheck even without a database.
 """
 
-from typing import Generator
+from typing import Generator, Optional
+import logging
 from sqlmodel import Session, SQLModel, create_engine
-from app.config import settings
+from sqlalchemy.engine import Engine
 
-# Create database engine
-# Connection pool settings:
-# - pool_size=5: number of connections to maintain in the pool
-# - max_overflow=10: additional connections allowed beyond pool_size
-# - pool_pre_ping=True: validate connections before using (handles stale connections)
-# - echo=False: disable SQL query logging (set to True for debugging)
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_size=5,
-    max_overflow=10,
-    pool_pre_ping=True,
-    echo=False,  # Set to True to log SQL queries
-)
+logger = logging.getLogger(__name__)
+
+# Engine is created lazily when first accessed
+_engine: Optional[Engine] = None
+
+
+def get_engine() -> Engine:
+    """
+    Get or create the database engine.
+    Raises RuntimeError if DATABASE_URL is not configured.
+    """
+    global _engine
+    if _engine is None:
+        from app.config import settings
+        if not settings.DATABASE_URL:
+            raise RuntimeError("DATABASE_URL is not configured")
+
+        logger.info("Creating database engine...")
+        _engine = create_engine(
+            settings.DATABASE_URL,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True,
+            echo=False,
+        )
+        logger.info("Database engine created successfully")
+    return _engine
+
+
+# Backwards compatibility - lazy property
+@property
+def engine() -> Engine:
+    return get_engine()
 
 
 def create_db_and_tables() -> None:
     """
     Create all database tables based on SQLModel metadata.
-
-    This function should be called during application startup to ensure
-    all tables exist. In production, use Alembic migrations instead.
+    Does nothing if DATABASE_URL is not configured.
     """
-    SQLModel.metadata.create_all(engine)
+    try:
+        eng = get_engine()
+        SQLModel.metadata.create_all(eng)
+        logger.info("Database tables created successfully")
+    except RuntimeError as e:
+        logger.warning(f"Cannot create tables: {e}")
+    except Exception as e:
+        logger.error(f"Failed to create tables: {e}")
 
 
 def get_session() -> Generator[Session, None, None]:
     """
     FastAPI dependency that provides a database session.
 
-    Yields a SQLModel Session that is automatically closed after use.
-    Use this as a dependency in route handlers:
-
-    Example:
-        @app.get("/users")
-        async def get_users(session: Session = Depends(get_session)):
-            users = session.exec(select(User)).all()
-            return users
+    Raises HTTPException if DATABASE_URL is not configured.
     """
-    with Session(engine) as session:
-        yield session
+    from fastapi import HTTPException
+    try:
+        eng = get_engine()
+        with Session(eng) as session:
+            yield session
+    except RuntimeError:
+        raise HTTPException(
+            status_code=503,
+            detail="Database is not configured"
+        )

@@ -187,7 +187,7 @@ async def get_google_auth_url() -> OAuthURLResponse:
 
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "redirect_uri": settings.get_google_redirect_uri(),
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -234,7 +234,7 @@ async def google_callback(
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
                 "code": request.code,
                 "grant_type": "authorization_code",
-                "redirect_uri": settings.GOOGLE_REDIRECT_URI
+                "redirect_uri": settings.get_google_redirect_uri()
             }
         )
 
@@ -343,7 +343,7 @@ async def get_github_auth_url() -> OAuthURLResponse:
 
     params = {
         "client_id": settings.GITHUB_CLIENT_ID,
-        "redirect_uri": settings.GITHUB_REDIRECT_URI,
+        "redirect_uri": settings.get_github_redirect_uri(),
         "scope": "read:user user:email",
         "state": state
     }
@@ -386,7 +386,7 @@ async def github_callback(
                 "client_id": settings.GITHUB_CLIENT_ID,
                 "client_secret": settings.GITHUB_CLIENT_SECRET,
                 "code": request.code,
-                "redirect_uri": settings.GITHUB_REDIRECT_URI
+                "redirect_uri": settings.get_github_redirect_uri()
             },
             headers={"Accept": "application/json"}
         )

@@ -28,6 +28,26 @@ app = FastAPI(
 )
 
 # =============================================================================
+# CORS MIDDLEWARE - must be registered at app creation, NOT in lifespan
+# =============================================================================
+try:
+    from app.config import settings
+    # Use configured frontend URL or fallback to localhost
+    cors_origins = [settings.FRONTEND_URL] if settings.FRONTEND_URL else ["http://localhost:3000"]
+    logger.info(f"Configuring CORS for origins: {cors_origins}")
+except Exception as e:
+    logger.warning(f"Could not load FRONTEND_URL from settings: {e}")
+    cors_origins = ["*"]  # Fallback to allow all origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
+
+# =============================================================================
 # HEALTH ENDPOINT - defined FIRST, no dependencies
 # =============================================================================
 @app.get("/health", tags=["Health"])
@@ -66,31 +86,6 @@ def init_database() -> bool:
         return False
 
 
-def setup_cors():
-    """Configure CORS middleware."""
-    try:
-        from app.config import settings
-        origins = [settings.FRONTEND_URL] if settings.FRONTEND_URL else ["*"]
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=origins,
-            allow_credentials=True,
-            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allow_headers=["Authorization", "Content-Type"],
-        )
-        logger.info(f"CORS configured for: {origins}")
-    except Exception as e:
-        logger.error(f"CORS setup failed: {e}")
-        # Fallback: allow all origins
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-
-
 def setup_routers():
     """Register API routers."""
     try:
@@ -112,8 +107,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     logger.info("Application starting...")
 
-    # Setup (non-blocking)
-    setup_cors()
+    # Setup (non-blocking) - CORS already configured at module level
     setup_routers()
     init_database()
 

@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import Optional, List
+from pydantic import field_validator, BeforeValidator
+from typing import Optional, List, Union, Annotated
 import logging
 import os
 
@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
 
     # CORS - List of allowed origins
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    # Accepts: JSON array, comma-separated string, or single string
+    CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000"]
 
     # Auth - JWT - Optional at startup, required for auth operations
     JWT_SECRET_KEY: Optional[str] = None
@@ -67,22 +68,39 @@ class Settings(BaseSettings):
     def validate_cors_origins(cls, v) -> List[str]:
         """
         Ensure CORS_ORIGINS is a list of strings.
-        Accepts both comma-separated strings and lists.
+        Accepts: JSON array, comma-separated string, or single string
+
+        Railway/env formats supported:
+        - JSON: ["https://example.com", "http://localhost:3000"]
+        - CSV: "https://example.com,http://localhost:3000"
+        - Single: "https://example.com"
         """
-        if v is None:
+        if v is None or v == "":
+            logger.info("CORS_ORIGINS not set, using default: localhost:3000")
             return ["http://localhost:3000"]
 
-        # If it's already a list, return it
+        # If it's already a list, clean and return it
         if isinstance(v, list):
-            return v
+            return [origin.strip() for origin in v if origin and origin.strip()]
 
-        # If it's a string, split by comma
+        # If it's a string, parse it
         if isinstance(v, str):
+            # Remove any surrounding whitespace
+            v = v.strip()
+
+            # Handle empty string
+            if not v:
+                return ["http://localhost:3000"]
+
             # Handle comma-separated values
             if "," in v:
-                return [origin.strip() for origin in v.split(",")]
+                origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+                logger.info(f"Parsed CORS_ORIGINS from CSV: {origins}")
+                return origins
+
             # Single value
-            return [v.strip()]
+            logger.info(f"Using single CORS origin: {v}")
+            return [v]
 
         logger.warning(f"Unexpected CORS_ORIGINS type: {type(v)}, defaulting to localhost")
         return ["http://localhost:3000"]

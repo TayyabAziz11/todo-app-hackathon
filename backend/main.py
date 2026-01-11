@@ -87,16 +87,31 @@ def init_database() -> bool:
 
 
 def setup_routers():
-    """Register API routers."""
+    """
+    Register API routers.
+
+    CRITICAL: Routers must be registered for the app to function.
+    If this fails, the app should not start.
+    """
     try:
         from app.routers.auth import router as auth_router
         from app.routers.todos import router as todos_router
 
         app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
         app.include_router(todos_router, prefix="/api", tags=["Todos"])
-        logger.info("Routers registered successfully")
+        logger.info("✓ Routers registered successfully")
+        logger.info("  - /api/auth/* (Authentication)")
+        logger.info("  - /api/todos/* (Todos)")
     except Exception as e:
-        logger.error(f"Router setup failed: {e}")
+        logger.error(f"FATAL: Router setup failed: {e}")
+        logger.error("App cannot function without routes - startup aborted")
+        raise  # Re-raise to prevent app from starting without routes
+
+
+# =============================================================================
+# REGISTER ROUTERS - at module level to ensure they're always available
+# =============================================================================
+setup_routers()
 
 
 # =============================================================================
@@ -107,8 +122,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     logger.info("Application starting...")
 
-    # Setup (non-blocking) - CORS already configured at module level
-    setup_routers()
+    # Initialize database (non-blocking)
     init_database()
 
     logger.info("Application ready to serve requests")

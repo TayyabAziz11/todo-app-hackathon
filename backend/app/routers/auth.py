@@ -215,6 +215,9 @@ async def google_callback(
     4. Create new user or login existing user
     5. Return JWT token
     """
+    import logging
+    logger = logging.getLogger(__name__)
+
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -225,23 +228,33 @@ async def google_callback(
     if request.state and request.state in oauth_states:
         del oauth_states[request.state]
 
+    redirect_uri = settings.get_google_redirect_uri()
+    logger.info(f"Google OAuth callback - redirect_uri: {redirect_uri}")
+    logger.info(f"Google OAuth callback - FRONTEND_URL: {settings.FRONTEND_URL}")
+
     # Exchange code for tokens
     async with httpx.AsyncClient() as client:
+        token_data = {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "code": request.code,
+            "grant_type": "authorization_code",
+            "redirect_uri": redirect_uri
+        }
+
         token_response = await client.post(
             "https://oauth2.googleapis.com/token",
-            data={
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "code": request.code,
-                "grant_type": "authorization_code",
-                "redirect_uri": settings.get_google_redirect_uri()
-            }
+            data=token_data
         )
 
         if token_response.status_code != 200:
+            error_detail = token_response.text
+            logger.error(f"Google OAuth token exchange failed: {error_detail}")
+            logger.error(f"Redirect URI used: {redirect_uri}")
+            logger.error(f"FRONTEND_URL setting: {settings.FRONTEND_URL}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to exchange authorization code for tokens"
+                detail=f"Failed to exchange authorization code for tokens. Make sure redirect_uri in Google Console is: {redirect_uri}"
             )
 
         tokens = token_response.json()

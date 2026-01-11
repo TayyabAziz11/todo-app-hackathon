@@ -34,6 +34,10 @@ def hash_password(plain_password: str) -> str:
     Raises:
         ValueError: If password is empty or None
 
+    Security Note:
+        Bcrypt has a 72-byte password limit. Passwords are automatically
+        truncated to 72 bytes to comply with this limitation.
+
     Example:
         >>> hashed = hash_password("MySecurePassword123")
         >>> hashed.startswith("$2b$")
@@ -44,7 +48,12 @@ def hash_password(plain_password: str) -> str:
     if not plain_password or not plain_password.strip():
         raise ValueError("Password cannot be empty")
 
-    return pwd_context.hash(plain_password)
+    # Bcrypt has a 72-byte limit - truncate password to comply
+    # Using UTF-8 encoding to count bytes, not characters
+    password_bytes = plain_password.encode('utf-8')[:72]
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+
+    return pwd_context.hash(truncated_password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -60,6 +69,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches hash, False otherwise
 
+    Security Note:
+        Bcrypt has a 72-byte password limit. Passwords are automatically
+        truncated to 72 bytes before verification to match hashing behavior.
+
     Example:
         >>> hashed = hash_password("MySecurePassword123")
         >>> verify_password("MySecurePassword123", hashed)
@@ -70,4 +83,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not plain_password or not hashed_password:
         return False
 
-    return pwd_context.verify(plain_password, hashed_password)
+    # Bcrypt has a 72-byte limit - truncate password to comply
+    # This must match the truncation in hash_password()
+    password_bytes = plain_password.encode('utf-8')[:72]
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+
+    return pwd_context.verify(truncated_password, hashed_password)

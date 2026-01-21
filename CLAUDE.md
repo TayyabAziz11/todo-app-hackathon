@@ -212,6 +212,8 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 ## Active Technologies
 - Python 3.13+ + Python standard library only (argparse, sys, typing) (001-phase1-todo-cli)
 - In-memory dictionary (Dict[int, Dict[str, Any]]) (001-phase1-todo-cli)
+- Python 3.11+ (backend), TypeScript 5+ (frontend) (003-phase3-ai-chatbot)
+- Neon Serverless PostgreSQL (primary database), sessionStorage (frontend conversation_id persistence only) (003-phase3-ai-chatbot)
 
 ## Recent Changes
 - 001-phase1-todo-cli: Added Python 3.13+ + Python standard library only (argparse, sys, typing)

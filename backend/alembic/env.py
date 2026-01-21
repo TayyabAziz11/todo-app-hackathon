@@ -8,7 +8,7 @@ from alembic import context
 # Import SQLModel and application models
 from sqlmodel import SQLModel
 from app.config import settings
-from app.models import User, Todo  # Import all models so they're registered with SQLModel
+from app.models import User, Todo, Conversation, Message  # Import all models so they're registered with SQLModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

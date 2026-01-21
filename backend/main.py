@@ -23,8 +23,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 app = FastAPI(
     title="Todo API",
-    version="2.0.0",
-    description="Phase II: Multi-user Todo Application with Authentication"
+    version="3.0.0",
+    description="Phase III: AI-Powered Todo Chatbot with Stateless Conversation Management"
 )
 
 # =============================================================================
@@ -56,13 +56,13 @@ async def health_check():
     Health check endpoint for Railway/container orchestration.
     Returns 200 OK immediately - no database or auth required.
     """
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "3.0.0"}
 
 
 @app.get("/", tags=["Health"])
 async def root():
     """Root endpoint - redirects to docs."""
-    return {"message": "Todo API v2.0.0", "docs": "/docs", "health": "/health"}
+    return {"message": "Todo API v3.0.0 - AI-Powered Chatbot", "docs": "/docs", "health": "/health"}
 
 
 # =============================================================================
@@ -96,12 +96,15 @@ def setup_routers():
     try:
         from app.routers.auth import router as auth_router
         from app.routers.todos import router as todos_router
+        from app.routers.chat import router as chat_router
 
         app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
         app.include_router(todos_router, prefix="/api", tags=["Todos"])
+        app.include_router(chat_router, prefix="/api", tags=["Chat"])
         logger.info("✓ Routers registered successfully")
         logger.info("  - /api/auth/* (Authentication)")
         logger.info("  - /api/todos/* (Todos)")
+        logger.info("  - /api/chat/* (Chat - Phase 3 AI Chatbot)")
     except Exception as e:
         logger.error(f"FATAL: Router setup failed: {e}")
         logger.error("App cannot function without routes - startup aborted")
@@ -136,8 +139,17 @@ app.router.lifespan_context = lifespan
 
 
 # =============================================================================
-# LOCAL DEVELOPMENT
+# LOCAL DEVELOPMENT & DEPLOYMENT
 # =============================================================================
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    # Port configuration:
+    # - Hugging Face Spaces: 7860 (default)
+    # - Railway/local: 8000 (default)
+    # - Can be overridden with PORT environment variable
+    port = int(os.getenv("PORT", "7860"))
+
+    logger.info(f"Starting server on 0.0.0.0:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)

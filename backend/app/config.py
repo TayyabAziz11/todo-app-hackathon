@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # Frontend URL - defaults to allow app to start
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # OpenAI API - Required for Phase 3 AI Chatbot
+    OPENAI_API_KEY: Optional[str] = None
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: Optional[str]) -> Optional[str]:

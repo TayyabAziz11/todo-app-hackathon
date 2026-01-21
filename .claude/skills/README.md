@@ -170,6 +170,32 @@ When modifying skills:
 
 ---
 
+## Phase-Specific Skills
+
+### Phase 2: Full-Stack Web App
+**Location**: `./phase2/`
+
+Skills for building the authenticated full-stack web application:
+- `fullstack-requirement-orchestration` - Cross-stack specification coordination
+- `cross-layer-consistency-validation` - Frontend/backend alignment
+- `jwt-auth-flow-specification` - JWT authentication design
+- `rest-api-contract-definition` - REST endpoint contracts
+- `relational-schema-design` - SQLModel database design
+- ... and 13 more skills
+
+### Phase 3: AI Chatbot
+**Location**: `./phase3/`
+
+Skills for building the AI-powered chatbot interface:
+- `design-mcp-tools` - MCP tool definitions for task CRUD operations
+- `implement-mcp-server` - MCP server with tool registration and invocation
+- `define-agent-system-prompt` - System prompt with intent mapping and guardrails
+- `map-intents-to-tools` - NL intent classification with confidence thresholds
+- `implement-conversation-persistence` (planned) - Chat history storage
+- `integrate-chatkit-ui` (planned) - OpenAI ChatKit frontend
+
+---
+
 ## Related Documentation
 
 - **Constitution**: `.specify/memory/constitution.md` - Project principles
@@ -180,4 +206,4 @@ When modifying skills:
 ---
 
 **Maintained by**: Todo-app Hackathon Team
-**Last Updated**: 2025-12-29
+**Last Updated**: 2026-01-19

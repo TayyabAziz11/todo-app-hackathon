@@ -1,0 +1,669 @@
+mcp_version: "2025-11-25"
+server_name: "todo-task-operations"
+server_description: "MCP server providing stateless task management tools for AI-powered Todo Chatbot"
+
+tools:
+  - name: add_task
+    description: |
+      Creates a new task for the user. Use this tool when the user wants to add, create, or remember something.
+
+      **Natural Language Patterns**:
+      - "Add a task to..."
+      - "Create a task..."
+      - "Remind me to..."
+      - "I need to..."
+      - "Make a note to..."
+
+      **User Isolation**: Tool validates that task is created for the authenticated user only.
+
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User identifier from JWT token (for ownership validation)
+          example: "user_abc123"
+
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Task title extracted from natural language
+          example: "Buy groceries"
+
+        description:
+          type: string
+          maxLength: 1000
+          description: Optional task description or additional details
+          default: ""
+          example: "Need milk, eggs, and bread"
+
+      required:
+        - user_id
+        - title
+
+    output_schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the task was successfully created
+          example: true
+
+        task:
+          type: object
+          nullable: true
+          description: Created task object (null if success=false)
+          properties:
+            id:
+              type: integer
+              description: Unique task identifier
+              example: 42
+
+            user_id:
+              type: string
+              description: Owner of this task
+              example: "user_abc123"
+
+            title:
+              type: string
+              description: Task title
+              example: "Buy groceries"
+
+            description:
+              type: string
+              description: Task description
+              example: "Need milk, eggs, and bread"
+
+            completed:
+              type: boolean
+              description: Task completion status
+              example: false
+
+            created_at:
+              type: string
+              format: date-time
+              description: When task was created
+              example: "2026-01-21T10:30:00Z"
+
+        error:
+          type: string
+          nullable: true
+          description: Error message if success=false
+          example: null
+
+      required:
+        - success
+
+    error_codes:
+      - code: VALIDATION_ERROR
+        description: Invalid input (missing title, title too long, etc.)
+        http_status: 400
+
+      - code: DATABASE_ERROR
+        description: Failed to save task to database
+        http_status: 500
+
+  - name: list_tasks
+    description: |
+      Lists tasks for the user, optionally filtered by status.
+
+      **Natural Language Patterns**:
+      - "Show my tasks"
+      - "What do I need to do?"
+      - "List my pending tasks"
+      - "What have I completed?"
+      - "Show all tasks"
+
+      **Filtering**:
+      - "all" = return all tasks (default)
+      - "pending" = return only incomplete tasks
+      - "completed" = return only completed tasks
+
+      **User Isolation**: Tool returns only tasks belonging to authenticated user.
+
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User identifier from JWT token
+          example: "user_abc123"
+
+        status:
+          type: string
+          enum:
+            - all
+            - pending
+            - completed
+          default: "all"
+          description: Filter tasks by completion status
+          example: "pending"
+
+      required:
+        - user_id
+
+    output_schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the query was successful
+          example: true
+
+        tasks:
+          type: array
+          nullable: true
+          description: Array of tasks (null if success=false, empty array if no tasks)
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Task ID
+                example: 42
+
+              title:
+                type: string
+                description: Task title
+                example: "Buy groceries"
+
+              description:
+                type: string
+                description: Task description
+                example: ""
+
+              completed:
+                type: boolean
+                description: Completion status
+                example: false
+
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+                example: "2026-01-21T10:30:00Z"
+
+              updated_at:
+                type: string
+                format: date-time
+                description: Last update timestamp
+                example: "2026-01-21T10:30:00Z"
+
+        error:
+          type: string
+          nullable: true
+          description: Error message if success=false
+          example: null
+
+      required:
+        - success
+
+    error_codes:
+      - code: VALIDATION_ERROR
+        description: Invalid status parameter
+        http_status: 400
+
+      - code: DATABASE_ERROR
+        description: Failed to query tasks from database
+        http_status: 500
+
+  - name: update_task
+    description: |
+      Updates task title and/or description. Use when user wants to modify or edit an existing task.
+
+      **Natural Language Patterns**:
+      - "Change task 5 to..."
+      - "Update the groceries task..."
+      - "Modify task title..."
+      - "Add a note to task 3..."
+
+      **Partial Updates**: Only provided fields are updated; omitted fields remain unchanged.
+
+      **User Isolation**: Tool validates that task belongs to authenticated user before updating.
+
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User identifier from JWT token
+          example: "user_abc123"
+
+        task_id:
+          type: integer
+          description: ID of task to update
+          minimum: 1
+          example: 42
+
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: New task title (optional - only update if provided)
+          example: "Buy groceries and cook dinner"
+
+        description:
+          type: string
+          maxLength: 1000
+          description: New task description (optional - only update if provided)
+          example: "Get ingredients for pasta recipe"
+
+      required:
+        - user_id
+        - task_id
+
+    output_schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+
+        task:
+          type: object
+          nullable: true
+          description: Updated task object (null if success=false)
+          properties:
+            id:
+              type: integer
+              example: 42
+
+            title:
+              type: string
+              example: "Buy groceries and cook dinner"
+
+            description:
+              type: string
+              example: "Get ingredients for pasta recipe"
+
+            completed:
+              type: boolean
+              example: false
+
+            updated_at:
+              type: string
+              format: date-time
+              example: "2026-01-21T14:30:00Z"
+
+        error:
+          type: string
+          nullable: true
+          description: Error message if success=false
+          example: null
+
+      required:
+        - success
+
+    error_codes:
+      - code: NOT_FOUND
+        description: Task does not exist or does not belong to user
+        http_status: 404
+
+      - code: VALIDATION_ERROR
+        description: Invalid input (no fields to update, title too long, etc.)
+        http_status: 400
+
+      - code: DATABASE_ERROR
+        description: Failed to update task in database
+        http_status: 500
+
+  - name: complete_task
+    description: |
+      Marks a task as completed. Use when user indicates they've finished a task.
+
+      **Natural Language Patterns**:
+      - "I finished task 5"
+      - "Mark task as done"
+      - "Complete the groceries task"
+      - "I'm done with..."
+      - "Check off task 3"
+
+      **Context Matching**: Agent may need to find task by title if user doesn't provide ID.
+
+      **User Isolation**: Tool validates task belongs to authenticated user before completing.
+
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User identifier from JWT token
+          example: "user_abc123"
+
+        task_id:
+          type: integer
+          description: ID of task to complete
+          minimum: 1
+          example: 42
+
+      required:
+        - user_id
+        - task_id
+
+    output_schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the task was successfully completed
+          example: true
+
+        task:
+          type: object
+          nullable: true
+          description: Completed task object (null if success=false)
+          properties:
+            id:
+              type: integer
+              example: 42
+
+            title:
+              type: string
+              example: "Buy groceries"
+
+            completed:
+              type: boolean
+              description: Always true for successful completion
+              example: true
+
+            updated_at:
+              type: string
+              format: date-time
+              description: Completion timestamp
+              example: "2026-01-21T14:30:00Z"
+
+        error:
+          type: string
+          nullable: true
+          description: Error message if success=false
+          example: null
+
+      required:
+        - success
+
+    error_codes:
+      - code: NOT_FOUND
+        description: Task does not exist or does not belong to user
+        http_status: 404
+
+      - code: ALREADY_COMPLETED
+        description: Task is already marked as completed
+        http_status: 409
+
+      - code: DATABASE_ERROR
+        description: Failed to update task in database
+        http_status: 500
+
+  - name: delete_task
+    description: |
+      Permanently deletes a task. Use when user wants to remove a task entirely.
+
+      **Natural Language Patterns**:
+      - "Delete task 5"
+      - "Remove the groceries task"
+      - "Get rid of task 3"
+      - "I don't need this task anymore"
+
+      **Warning**: This is a destructive operation - task cannot be recovered.
+
+      **User Isolation**: Tool validates task belongs to authenticated user before deleting.
+
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User identifier from JWT token
+          example: "user_abc123"
+
+        task_id:
+          type: integer
+          description: ID of task to delete
+          minimum: 1
+          example: 42
+
+      required:
+        - user_id
+        - task_id
+
+    output_schema:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the task was successfully deleted
+          example: true
+
+        error:
+          type: string
+          nullable: true
+          description: Error message if success=false
+          example: null
+
+      required:
+        - success
+
+    error_codes:
+      - code: NOT_FOUND
+        description: Task does not exist or does not belong to user
+        http_status: 404
+
+      - code: DATABASE_ERROR
+        description: Failed to delete task from database
+        http_status: 500
+
+stateless_requirements:
+  - name: No Module-Level Sessions
+    description: |
+      Tools MUST NOT use module-level database sessions. Each tool invocation must use a
+      context manager to create a fresh database session that is automatically closed.
+
+      **Anti-Pattern** (WRONG):
+      ```python
+      # Module level - shared state
+      db_session = create_session()
+
+      @mcp.tool()
+      def add_task(user_id, title):
+          task = Task(user_id=user_id, title=title)
+          db_session.add(task)  # Uses shared session
+      ```
+
+      **Correct Pattern**:
+      ```python
+      @mcp.tool()
+      def add_task(user_id, title):
+          with get_db_session() as db:  # Fresh session per call
+              task = Task(user_id=user_id, title=title)
+              db.add(task)
+              db.commit()
+      ```
+
+  - name: User Isolation Validation
+    description: |
+      Every tool MUST validate user ownership before write operations (update, complete, delete).
+
+      **Pattern**:
+      ```python
+      def complete_task(user_id, task_id):
+          with get_db_session() as db:
+              task = db.query(Task).filter(
+                  Task.id == task_id,
+                  Task.user_id == user_id  # CRITICAL: user isolation
+              ).first()
+
+              if not task:
+                  return {"success": False, "error": "Task not found"}
+
+              task.completed = True
+              db.commit()
+              return {"success": True, "task": task.dict()}
+      ```
+
+  - name: Structured Response Format
+    description: |
+      All tools MUST return consistent response structure:
+      - success (boolean): Required
+      - data (object): Optional, present if success=true
+      - error (string): Optional, present if success=false
+
+      **Success Response**:
+      ```json
+      {
+        "success": true,
+        "task": { ... }
+      }
+      ```
+
+      **Error Response**:
+      ```json
+      {
+        "success": false,
+        "error": "Task not found"
+      }
+      ```
+
+  - name: No In-Memory Caching
+    description: |
+      Tools MUST NOT cache results in memory (e.g., module-level dictionaries, LRU caches).
+      Database is the single source of truth. Every query goes to database.
+
+      **Anti-Pattern** (WRONG):
+      ```python
+      # Module-level cache - shared state
+      task_cache = {}
+
+      @mcp.tool()
+      def list_tasks(user_id):
+          if user_id in task_cache:
+              return task_cache[user_id]  # Stale data
+      ```
+
+      **Correct Pattern**:
+      ```python
+      @mcp.tool()
+      def list_tasks(user_id):
+          with get_db_session() as db:
+              tasks = db.query(Task).filter(Task.user_id == user_id).all()
+              return {"success": True, "tasks": [t.dict() for t in tasks]}
+      ```
+
+agent_integration_notes:
+  - note: Tool Chaining Support
+    description: |
+      Agent may call multiple tools in sequence for complex operations.
+
+      **Example**: "Show my tasks and complete the first one"
+      1. Agent calls list_tasks(user_id, status="pending")
+      2. Agent extracts first task ID from results
+      3. Agent calls complete_task(user_id, task_id)
+      4. Agent returns conversational response summarizing both actions
+
+  - note: Context Matching Strategy
+    description: |
+      When user refers to task without ID, agent should:
+      1. Call list_tasks() to get all tasks
+      2. Match task by title similarity
+      3. Call appropriate tool with matched task_id
+
+      **Example**: "I finished the groceries task"
+      1. list_tasks(user_id, status="pending")
+      2. Find task with title containing "groceries"
+      3. complete_task(user_id, task_id=matched_id)
+
+  - note: Error Recovery
+    description: |
+      If tool returns success=false, agent should:
+      1. Parse error message
+      2. Respond to user with friendly explanation
+      3. Suggest alternative action if applicable
+
+      **Example**: Tool returns "Task not found"
+      Agent responds: "I couldn't find that task. Would you like to see your current tasks?"
+
+  - note: Confirmation Messages
+    description: |
+      Agent should provide specific confirmation after tool calls:
+      - Include task details (title, ID)
+      - Avoid generic "Done" responses
+      - Reference tool results in conversational language
+
+      **Example**: After add_task returns success
+      Agent: "I've created the task 'Buy groceries' for you. It's been added to your task list."
+
+deployment_notes:
+  - note: Database Session Management
+    description: |
+      Use FastAPI dependency injection for database sessions:
+
+      ```python
+      from fastapi import Depends
+      from sqlmodel import Session
+
+      def get_db():
+          with Session(engine) as session:
+              yield session
+
+      # Tools receive session via dependency
+      @mcp.tool()
+      def add_task(user_id, title, db: Session = Depends(get_db)):
+          task = Task(user_id=user_id, title=title)
+          db.add(task)
+          db.commit()
+          return {"success": True, "task": task.dict()}
+      ```
+
+  - note: MCP Server Registration
+    description: |
+      Register tools with MCP server during FastAPI startup:
+
+      ```python
+      from mcp.server.fastmcp import FastMCP
+
+      mcp = FastMCP("todo-task-operations")
+
+      # Register all tools
+      from .tools import add_task, list_tasks, update_task, complete_task, delete_task
+
+      mcp.tool()(add_task)
+      mcp.tool()(list_tasks)
+      mcp.tool()(update_task)
+      mcp.tool()(complete_task)
+      mcp.tool()(delete_task)
+
+      # Start MCP server (streamable-http transport)
+      @app.on_event("startup")
+      async def startup_mcp():
+          mcp.run(transport="streamable-http")
+      ```
+
+validation_checklist:
+  - criterion: Stateless Tool Execution
+    test: |
+      1. Start backend server
+      2. Call add_task via MCP
+      3. Restart backend server
+      4. Call list_tasks via MCP
+      5. Verify task created in step 2 is returned (proves database persistence, no in-memory state)
+
+  - criterion: User Isolation Enforcement
+    test: |
+      1. Create task for user A
+      2. Attempt to complete task for user B with user A's task_id
+      3. Verify complete_task returns error: "Task not found"
+      4. Attempt to complete task for user A with correct user_id
+      5. Verify complete_task returns success
+
+  - criterion: Tool Chaining
+    test: |
+      1. Send agent message: "Add task X and show my tasks"
+      2. Verify agent calls add_task, then list_tasks
+      3. Verify agent response mentions both actions
+
+  - criterion: Error Handling
+    test: |
+      1. Send agent message: "Complete task 9999" (non-existent ID)
+      2. Verify agent returns friendly error (not raw JSON)
+      3. Verify tool call result shows success=false with error message

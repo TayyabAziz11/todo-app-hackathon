@@ -25,3 +25,7 @@ httpx==0.27.0
 
 # Multipart form data (for file uploads)
 python-multipart==0.0.20
+
+# AI Agents and MCP Protocol (Phase 3)
+openai>=1.30.0  # OpenAI Agents SDK (includes agent runner)
+mcp>=1.0.0  # Official MCP SDK for tool registration

@@ -106,26 +106,32 @@ export async function sendMessage(options: SendMessageOptions): Promise<ChatResp
 }
 
 /**
- * Get user ID and auth token from Better Auth session
+ * Get user ID and auth token from localStorage
  *
- * This is a placeholder - implement based on your Better Auth integration
+ * Retrieves authentication credentials stored by the auth context.
+ * This integrates with the existing Better Auth setup that stores
+ * JWT tokens and user IDs in localStorage.
  *
  * @returns User ID and auth token
+ * @throws Error if user is not authenticated
  */
 export async function getUserAuth(): Promise<{ userId: string; authToken: string }> {
-  // TODO: Implement Better Auth integration
-  // For now, return placeholder values
-  // In production, extract from Better Auth session cookie or context
+  // Check if we're in browser environment
+  if (typeof window === "undefined") {
+    throw new Error("getUserAuth() must be called from browser environment");
+  }
 
-  // Example implementation (adjust based on your Better Auth setup):
-  // const session = await auth.getSession();
-  // if (!session || !session.user) {
-  //   throw new Error("Not authenticated");
-  // }
-  // return {
-  //   userId: session.user.id,
-  //   authToken: session.accessToken,
-  // };
+  // Retrieve stored credentials from localStorage
+  // These are set by the AuthProvider in @/lib/auth
+  const authToken = localStorage.getItem("jwt_token");
+  const userId = localStorage.getItem("user_id");
 
-  throw new Error("Authentication not implemented. Please implement getUserAuth() with Better Auth integration.");
+  if (!authToken || !userId) {
+    throw new Error("Not authenticated. Please log in to use the chat feature.");
+  }
+
+  return {
+    userId,
+    authToken,
+  };
 }

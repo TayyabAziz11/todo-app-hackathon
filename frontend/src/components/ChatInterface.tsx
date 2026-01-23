@@ -164,9 +164,19 @@ export default function ChatInterface() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Todo AI Chatbot</h1>
-            <p className="text-sm text-gray-500">
-              {conversationId ? `Conversation: ${conversationId.substring(0, 8)}...` : "New conversation"}
-            </p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm text-gray-500">
+                {conversationId ? `Conversation: ${conversationId.substring(0, 8)}...` : "New conversation"}
+              </p>
+              {conversationId && (
+                <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Saved automatically
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={handleClearConversation}

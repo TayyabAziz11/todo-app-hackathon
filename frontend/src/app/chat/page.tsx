@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import ChatInterface from "@/components/ChatInterface";
+import Navbar from "@/components/layout/Navbar";
 
 export default function ChatPage() {
   const { user, isLoading } = useAuth();
@@ -42,5 +43,12 @@ export default function ChatPage() {
   }
 
   // Render chat interface for authenticated users
-  return <ChatInterface />;
+  return (
+    <>
+      <Navbar />
+      <div className="pt-16">
+        <ChatInterface />
+      </div>
+    </>
+  );
 }

@@ -64,12 +64,25 @@ class AgentRunner:
             temperature: Sampling temperature (0-2)
             max_tokens: Maximum tokens in response
         """
-        try:
-            from openai import OpenAI
-            self.client = OpenAI(api_key=openai_api_key)
-        except ImportError:
-            logger.error("OpenAI package not installed. Install with: pip install openai")
+        # Validate API key before attempting to create client
+        if not openai_api_key or openai_api_key == "None" or openai_api_key.strip() == "":
+            logger.error(
+                "OPENAI_API_KEY is not set or invalid. "
+                "Please set OPENAI_API_KEY in your backend/.env file. "
+                "Get your key from: https://platform.openai.com/api-keys"
+            )
             self.client = None
+        else:
+            try:
+                from openai import OpenAI
+                self.client = OpenAI(api_key=openai_api_key)
+                logger.info(f"OpenAI client initialized successfully with model: {model}")
+            except ImportError:
+                logger.error("OpenAI package not installed. Install with: pip install openai")
+                self.client = None
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}")
+                self.client = None
 
         from app.mcp import get_mcp_server
 
@@ -108,7 +121,13 @@ class AgentRunner:
         """
         if not self.client:
             return AgentResponse(
-                message="OpenAI client not configured. Please set OPENAI_API_KEY.",
+                message=(
+                    "⚠️ AI chatbot is not configured. The OPENAI_API_KEY is missing.\n\n"
+                    "Please ask your administrator to:\n"
+                    "1. Get an API key from https://platform.openai.com/api-keys\n"
+                    "2. Add it to the backend/.env file as OPENAI_API_KEY=sk-...\n"
+                    "3. Restart the backend server"
+                ),
                 finish_reason="error",
             )
 

@@ -128,6 +128,17 @@ class Settings(BaseSettings):
             return "http://localhost:3000"
         return v.rstrip("/")
 
+    @field_validator("OPENAI_API_KEY")
+    @classmethod
+    def validate_openai_key(cls, v: Optional[str]) -> Optional[str]:
+        """Validate OPENAI_API_KEY if set."""
+        if not v:
+            logger.warning("OPENAI_API_KEY not set - AI chatbot features will fail")
+            return None
+        if not v.startswith("sk-"):
+            logger.warning("OPENAI_API_KEY should start with 'sk-' - verify key is correct")
+        return v
+
     # ============================================
     # OAuth Configuration
     # ============================================
@@ -210,6 +221,8 @@ try:
         logger.warning("DATABASE_URL not configured - database features disabled")
     if not settings.JWT_SECRET_KEY:
         logger.warning("JWT_SECRET_KEY not configured - authentication disabled")
+    if not settings.OPENAI_API_KEY:
+        logger.warning("OPENAI_API_KEY not configured - AI chatbot features disabled")
 except Exception as e:
     logger.error(f"Failed to load settings: {e}")
     # Create minimal settings to allow app to start for healthcheck

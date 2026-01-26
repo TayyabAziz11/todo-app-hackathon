@@ -69,8 +69,12 @@ class ChatRequest(BaseModel):
 class ToolCall(BaseModel):
     """Tool call transparency for debugging and trust building."""
     tool: str = Field(..., description="MCP tool name")
-    arguments: Dict[str, Any] = Field(..., description="Arguments passed to tool")
-    result: Dict[str, Any] = Field(..., description="Tool execution result")
+    arguments: Dict[str, Any] = Field(default_factory=dict, description="Arguments passed to tool")
+    result: Dict[str, Any] = Field(default_factory=dict, description="Tool execution result")
+
+    class Config:
+        # Allow extra fields from agent runner (tool_call_id, success, etc.)
+        extra = "ignore"
 
 
 class ChatResponse(BaseModel):
@@ -238,19 +242,23 @@ async def send_chat_message(
             from app.config import settings
 
             # Initialize agent runner (stateless - fresh per request)
+            # Use gpt-4o-mini for better function calling support and lower cost
             agent_runner = AgentRunner(
                 openai_api_key=settings.OPENAI_API_KEY,
-                model="gpt-4",
+                model="gpt-4o-mini",
                 temperature=0.7,
                 max_tokens=1000
             )
 
             # Format conversation history for agent
+            # CRITICAL: Include tool_call_id and name for tool messages to ensure protocol compliance
             formatted_history = [
                 AgentMessage(
                     role=msg.role,
                     content=msg.content,
-                    tool_calls=msg.tool_calls if hasattr(msg, 'tool_calls') else None
+                    tool_calls=msg.tool_calls if hasattr(msg, 'tool_calls') else None,
+                    tool_call_id=msg.tool_call_id if hasattr(msg, 'tool_call_id') else None,
+                    name=msg.name if hasattr(msg, 'name') else None
                 )
                 for msg in conversation_messages
             ]
@@ -263,15 +271,47 @@ async def send_chat_message(
                 user_name=None  # Could get from user profile in future
             )
 
-            # Extract response
-            assistant_content = agent_response.message
-            tool_calls_data = agent_response.tool_calls
+            # Extract response with defensive handling
+            assistant_content = agent_response.message or "I'm not sure how to respond to that."
+            tool_calls_data = agent_response.tool_calls if agent_response.tool_calls else []
 
             logger.info(
                 f"Agent executed successfully, "
                 f"tool_calls={len(tool_calls_data)}, "
+                f"intermediate_messages={len(agent_response.intermediate_messages)}, "
                 f"finish_reason={agent_response.finish_reason}"
             )
+
+            # CRITICAL: Persist ALL intermediate messages (assistant with tool_calls + tool responses)
+            # This ensures OpenAI protocol compliance when conversation is resumed
+            for intermediate_msg in agent_response.intermediate_messages:
+                msg_role = intermediate_msg["role"]
+                msg_content = intermediate_msg.get("content", "")
+
+                # Handle assistant message with tool_calls
+                if msg_role == "assistant" and "tool_calls" in intermediate_msg:
+                    save_message(
+                        db=session,
+                        conversation_id=conversation.id,
+                        user_id=UUID(authenticated_user_id),
+                        role="assistant",
+                        content=msg_content,
+                        tool_calls=intermediate_msg["tool_calls"]  # Save tool_calls for transparency
+                    )
+                    logger.debug(f"Persisted assistant message with {len(intermediate_msg['tool_calls'])} tool_calls")
+
+                # Handle tool response message
+                elif msg_role == "tool":
+                    save_message(
+                        db=session,
+                        conversation_id=conversation.id,
+                        user_id=UUID(authenticated_user_id),
+                        role="tool",
+                        content=msg_content,
+                        tool_call_id=intermediate_msg.get("tool_call_id"),
+                        name=intermediate_msg.get("name")
+                    )
+                    logger.debug(f"Persisted tool response for {intermediate_msg.get('name')}")
 
         except ImportError as e:
             logger.error(f"OpenAI SDK not installed: {e}")
@@ -287,16 +327,18 @@ async def send_chat_message(
             )
             tool_calls_data = []
 
-        # T033: Persist assistant response
+        # T033: Persist final assistant response
+        # NOTE: If tool calls were made, intermediate messages were already saved above
+        # This saves the FINAL assistant response (after all tool executions)
         assistant_message = save_message(
             db=session,
             conversation_id=conversation.id,
             user_id=UUID(authenticated_user_id),
             role="assistant",
             content=assistant_content,
-            tool_calls=tool_calls_data if tool_calls_data else None
+            tool_calls=None  # Don't duplicate tool_calls - already saved in intermediate messages
         )
-        logger.debug(f"Persisted assistant message {assistant_message.id}")
+        logger.debug(f"Persisted final assistant message {assistant_message.id}")
 
         # T035: Log successful completion
         logger.info(
@@ -305,10 +347,20 @@ async def send_chat_message(
         )
 
         # Return response following chat-api.yaml contract
+        # Transform tool_calls_data to match ChatResponse.ToolCall schema
+        formatted_tool_calls = []
+        if tool_calls_data:
+            for tc in tool_calls_data:
+                formatted_tool_calls.append({
+                    "tool": tc.get("tool_name", "unknown"),  # Map tool_name -> tool
+                    "arguments": tc.get("arguments", {}),
+                    "result": tc.get("result", {})
+                })
+
         return ChatResponse(
             conversation_id=conversation.id,
             message=assistant_content,
-            tool_calls=tool_calls_data
+            tool_calls=formatted_tool_calls
         )
 
     except HTTPException:

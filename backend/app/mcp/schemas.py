@@ -26,8 +26,19 @@ class TaskResult(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.isoformat() + "Z" if v else None
+            datetime: lambda v: v.isoformat() if v else None
         }
+
+    def model_dump(self, **kwargs):
+        """Override model_dump to ensure datetime serialization."""
+        # Get the default dump
+        data = super().model_dump(**kwargs)
+        # Manually serialize datetime objects
+        if isinstance(data.get('created_at'), datetime):
+            data['created_at'] = data['created_at'].isoformat()
+        if isinstance(data.get('updated_at'), datetime):
+            data['updated_at'] = data['updated_at'].isoformat()
+        return data
 
 
 class TaskSummary(BaseModel):
@@ -88,6 +99,16 @@ class AddTaskOutput(BaseModel):
     message: str = Field(..., description="Human-readable result message")
     error: Optional[str] = Field(None, description="Error code if failed")
 
+    def model_dump(self, **kwargs):
+        """Override model_dump to ensure datetime serialization."""
+        data = super().model_dump(**kwargs)
+        if data.get('task'):
+            if isinstance(data['task'].get('created_at'), datetime):
+                data['task']['created_at'] = data['task']['created_at'].isoformat()
+            if isinstance(data['task'].get('updated_at'), datetime):
+                data['task']['updated_at'] = data['task']['updated_at'].isoformat()
+        return data
+
 
 # =============================================================================
 # list_tasks Schemas
@@ -144,6 +165,18 @@ class ListTasksOutput(BaseModel):
     message: str = Field(..., description="Human-readable result message")
     error: Optional[str] = Field(None, description="Error code if failed")
 
+    def model_dump(self, **kwargs):
+        """Override model_dump to ensure datetime serialization in task list."""
+        data = super().model_dump(**kwargs)
+        # Serialize each task's datetime fields
+        if data.get('tasks'):
+            for task in data['tasks']:
+                if isinstance(task.get('created_at'), datetime):
+                    task['created_at'] = task['created_at'].isoformat()
+                if isinstance(task.get('updated_at'), datetime):
+                    task['updated_at'] = task['updated_at'].isoformat()
+        return data
+
 
 # =============================================================================
 # update_task Schemas
@@ -191,6 +224,16 @@ class UpdateTaskOutput(BaseModel):
     message: str = Field(..., description="Human-readable result message")
     error: Optional[str] = Field(None, description="Error code if failed")
 
+    def model_dump(self, **kwargs):
+        """Override model_dump to ensure datetime serialization."""
+        data = super().model_dump(**kwargs)
+        if data.get('task'):
+            if isinstance(data['task'].get('created_at'), datetime):
+                data['task']['created_at'] = data['task']['created_at'].isoformat()
+            if isinstance(data['task'].get('updated_at'), datetime):
+                data['task']['updated_at'] = data['task']['updated_at'].isoformat()
+        return data
+
 
 # =============================================================================
 # complete_task Schemas
@@ -220,6 +263,16 @@ class CompleteTaskOutput(BaseModel):
     task: Optional[TaskResult] = Field(None, description="The updated task")
     message: str = Field(..., description="Human-readable result message")
     error: Optional[str] = Field(None, description="Error code if failed")
+
+    def model_dump(self, **kwargs):
+        """Override model_dump to ensure datetime serialization."""
+        data = super().model_dump(**kwargs)
+        if data.get('task'):
+            if isinstance(data['task'].get('created_at'), datetime):
+                data['task']['created_at'] = data['task']['created_at'].isoformat()
+            if isinstance(data['task'].get('updated_at'), datetime):
+                data['task']['updated_at'] = data['task']['updated_at'].isoformat()
+        return data
 
 
 # =============================================================================

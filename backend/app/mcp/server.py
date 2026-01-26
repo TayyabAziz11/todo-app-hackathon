@@ -124,12 +124,14 @@ class MCPToolServer:
         """
         tools = []
         for tool_def in self._tool_definitions.values():
+            # Use exclude_none=True to remove null values from the schema
+            # OpenAI API rejects schemas with null values (e.g., "minimum": null)
             tools.append({
                 "type": "function",
                 "function": {
                     "name": tool_def.name,
                     "description": tool_def.description,
-                    "parameters": tool_def.inputSchema.model_dump(),
+                    "parameters": tool_def.inputSchema.model_dump(exclude_none=True),
                 }
             })
         return tools

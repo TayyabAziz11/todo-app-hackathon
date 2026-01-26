@@ -32,6 +32,7 @@ class AgentResponse:
     finish_reason: str = "stop"
     usage: Dict[str, int] = field(default_factory=dict)
     model: str = "unknown"
+    intermediate_messages: List[Dict[str, Any]] = field(default_factory=list)  # NEW: All messages created during execution
 
 
 class AgentRunner:
@@ -51,7 +52,7 @@ class AgentRunner:
     def __init__(
         self,
         openai_api_key: str,
-        model: str = "gpt-4",
+        model: str = "gpt-4o-mini",
         temperature: float = 0.7,
         max_tokens: Optional[int] = 1000,
     ):
@@ -60,7 +61,7 @@ class AgentRunner:
 
         Args:
             openai_api_key: OpenAI API key
-            model: Model to use (gpt-4, gpt-3.5-turbo, etc.)
+            model: Model to use (gpt-4o-mini, gpt-4o, gpt-4, etc.)
             temperature: Sampling temperature (0-2)
             max_tokens: Maximum tokens in response
         """
@@ -168,6 +169,71 @@ class AgentRunner:
                 finish_reason="error",
             )
 
+    def _normalize_tool_calls(self, tool_calls: Any) -> List[Dict[str, Any]]:
+        """
+        Normalize tool_calls to OpenAI expected format.
+
+        Handles two formats:
+        1. Database format (from conversation history):
+           [{"tool_call_id": "...", "tool_name": "...", "arguments": {...}, "result": {...}}]
+
+        2. OpenAI format (from live responses):
+           [{"id": "...", "type": "function", "function": {"name": "...", "arguments": "{...}"}}]
+
+        Args:
+            tool_calls: Tool calls in either format (list or dict)
+
+        Returns:
+            List of tool calls in OpenAI format
+        """
+        if not tool_calls:
+            return []
+
+        # Handle dict format (single tool_calls object from database)
+        if isinstance(tool_calls, dict):
+            tool_calls = [tool_calls]
+
+        # Handle list format
+        if not isinstance(tool_calls, list):
+            logger.warning(f"Unexpected tool_calls type: {type(tool_calls)}")
+            return []
+
+        normalized = []
+        for tc in tool_calls:
+            # Skip invalid entries
+            if not isinstance(tc, dict):
+                continue
+
+            # Check if already in OpenAI format
+            if "id" in tc and "type" in tc and "function" in tc:
+                normalized.append(tc)
+                continue
+
+            # Convert from database format to OpenAI format
+            if "tool_call_id" in tc and "tool_name" in tc:
+                # Database format detected
+                arguments = tc.get("arguments", {})
+
+                # Ensure arguments is a JSON string for OpenAI
+                if isinstance(arguments, dict):
+                    arguments_str = json.dumps(arguments)
+                else:
+                    arguments_str = str(arguments)
+
+                normalized.append({
+                    "id": tc["tool_call_id"],
+                    "type": "function",
+                    "function": {
+                        "name": tc["tool_name"],
+                        "arguments": arguments_str,
+                    }
+                })
+                logger.debug(f"Normalized tool_call: {tc['tool_name']}")
+            else:
+                logger.warning(f"Malformed tool_call entry, skipping: {tc}")
+
+        return normalized
+
     def _build_messages(
         self,
         user_message: str,
@@ -210,7 +276,11 @@ class AgentRunner:
 
             # Add optional fields
             if msg.tool_calls:
-                message_dict["tool_calls"] = msg.tool_calls
+                # Normalize tool_calls to OpenAI expected format
+                normalized_tool_calls = self._normalize_tool_calls(msg.tool_calls)
+                # Only add if normalization produced valid tool calls
+                if normalized_tool_calls:
+                    message_dict["tool_calls"] = normalized_tool_calls
             if msg.tool_call_id:
                 message_dict["tool_call_id"] = msg.tool_call_id
             if msg.name:
@@ -236,69 +306,131 @@ class AgentRunner:
         """
         Process OpenAI response and handle tool calls.
 
-        If response contains tool calls:
-        1. Execute each tool via MCP server
-        2. Add tool results to messages
-        3. Call OpenAI again for final response
+        CRITICAL PROTOCOL REQUIREMENT:
+        Every assistant message with tool_calls MUST be followed by
+        tool response messages (role="tool") before the next assistant message.
+
+        This method:
+        1. Checks if response contains tool_calls
+        2. For each tool call:
+           - Executes tool via MCP server (with error handling)
+           - Appends role="tool" message with exact tool_call_id
+        3. Loops until finish_reason="stop" (supports multi-step chains)
+        4. Tracks ALL intermediate messages for persistence
+        5. Returns final assistant response
 
         Args:
             response: OpenAI API response
             user_id: User ID for tool invocation
-            messages: Current message list
+            messages: Current message list (modified in-place)
 
         Returns:
-            AgentResponse with final message
+            AgentResponse with final message and intermediate messages
         """
-        message = response.choices[0].message
+        intermediate_messages = []  # Track all messages created during execution
         tool_calls_log = []
+        max_iterations = 10  # Safety limit for tool chains
+        iteration = 0
 
-        # Check if agent wants to use tools
-        if hasattr(message, 'tool_calls') and message.tool_calls:
-            logger.info(f"Processing {len(message.tool_calls)} tool calls")
-
-            # Add assistant message with tool calls
-            messages.append({
-                "role": "assistant",
-                "content": message.content or "",
-                "tool_calls": [
-                    {
-                        "id": tc.id,
-                        "type": tc.type,
-                        "function": {
-                            "name": tc.function.name,
-                            "arguments": tc.function.arguments,
-                        }
-                    }
-                    for tc in message.tool_calls
-                ],
-            })
-
-            # Execute each tool call
-            for tool_call in message.tool_calls:
-                tool_result = self._execute_tool_call(
-                    tool_call,
-                    user_id,
-                )
-                tool_calls_log.append(tool_result)
-
-                # Add tool result to messages
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "name": tool_call.function.name,
-                    "content": json.dumps(tool_result["result"]),
-                })
-
-            # Call OpenAI again with tool results
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-            )
+        while iteration < max_iterations:
+            iteration += 1
             message = response.choices[0].message
 
-        # Return structured response
+            # Check if agent wants to use tools
+            if hasattr(message, 'tool_calls') and message.tool_calls:
+                logger.info(f"Iteration {iteration}: Processing {len(message.tool_calls)} tool calls")
+
+                # CRITICAL: Add assistant message with tool_calls
+                assistant_message = {
+                    "role": "assistant",
+                    "content": message.content or "",
+                    "tool_calls": [
+                        {
+                            "id": tc.id,
+                            "type": tc.type,
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments,
+                            }
+                        }
+                        for tc in message.tool_calls
+                    ],
+                }
+                messages.append(assistant_message)
+                intermediate_messages.append(assistant_message)
+
+                # CRITICAL: Execute each tool and append tool response message
+                for tool_call in message.tool_calls:
+                    # Execute tool with error handling
+                    try:
+                        tool_result = self._execute_tool_call(
+                            tool_call,
+                            user_id,
+                        )
+                        tool_calls_log.append(tool_result)
+
+                        # Success: serialize result
+                        content = json.dumps(tool_result["result"], default=str)
+
+                    except Exception as e:
+                        # ERROR: Tool execution failed - return structured error
+                        logger.error(f"Tool {tool_call.function.name} failed: {e}", exc_info=True)
+                        error_result = {
+                            "success": False,
+                            "error": "TOOL_EXECUTION_ERROR",
+                            "message": str(e),
+                            "tool": tool_call.function.name
+                        }
+                        tool_calls_log.append({
+                            "tool_call_id": tool_call.id,
+                            "tool_name": tool_call.function.name,
+                            "arguments": json.loads(tool_call.function.arguments) if tool_call.function.arguments else {},
+                            "result": error_result,
+                            "success": False,
+                        })
+                        content = json.dumps(error_result, default=str)
+
+                    # CRITICAL: Add tool response message
+                    tool_message = {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": tool_call.function.name,
+                        "content": content,
+                    }
+                    messages.append(tool_message)
+                    intermediate_messages.append(tool_message)
+
+                # Call OpenAI again with tool results (supports multi-step chains)
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        tools=self.mcp_server.get_tools_for_ai(),  # Include tools for potential chaining
+                        tool_choice="auto",
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                    )
+                except Exception as e:
+                    logger.error(f"OpenAI API call failed: {e}")
+                    return AgentResponse(
+                        message=f"I encountered an error calling the AI service: {str(e)}",
+                        tool_calls=tool_calls_log,
+                        finish_reason="error",
+                        intermediate_messages=intermediate_messages,
+                    )
+
+                # Continue loop to check if more tool calls are needed
+                continue
+
+            else:
+                # No tool calls - we have the final response
+                logger.info(f"Final response after {iteration} iteration(s), finish_reason={response.choices[0].finish_reason}")
+                break
+
+        if iteration >= max_iterations:
+            logger.warning(f"Reached max iterations ({max_iterations}) for tool chains")
+
+        # Return structured response with ALL intermediate messages
         return AgentResponse(
             message=message.content or "",
             tool_calls=tool_calls_log,
@@ -309,6 +441,7 @@ class AgentRunner:
                 "total_tokens": response.usage.total_tokens,
             },
             model=response.model,
+            intermediate_messages=intermediate_messages,  # Include for persistence
         )
 
     def _execute_tool_call(

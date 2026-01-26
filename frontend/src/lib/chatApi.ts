@@ -10,7 +10,7 @@ export interface ChatMessage {
   content: string;
   tool_calls?: Array<{
     tool: string;
-    input: Record<string, unknown>;
+    arguments: Record<string, unknown>;
     result: Record<string, unknown>;
   }>;
 }
@@ -20,7 +20,7 @@ export interface ChatResponse {
   conversation_id: string;
   tool_calls?: Array<{
     tool: string;
-    input: Record<string, unknown>;
+    arguments: Record<string, unknown>;
     result: Record<string, unknown>;
   }>;
   finish_reason?: string;

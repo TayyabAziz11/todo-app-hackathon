@@ -3,8 +3,22 @@ from pydantic import field_validator, BeforeValidator
 from typing import Optional, List, Union, Annotated
 import logging
 import os
+from pathlib import Path
+
+# Load .env file BEFORE Settings instantiation
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# Determine .env file path (backend/.env)
+env_path = Path(__file__).parent.parent / ".env"
+
+# Load .env with verification
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path, override=False)
+    logger.info(f"✓ Environment variables loaded from: {env_path}")
+else:
+    logger.warning(f"⚠ .env file not found at: {env_path} - using system environment only")
 
 
 class Settings(BaseSettings):
@@ -137,6 +151,16 @@ class Settings(BaseSettings):
             return None
         if not v.startswith("sk-"):
             logger.warning("OPENAI_API_KEY should start with 'sk-' - verify key is correct")
+            return v
+        # Check for placeholder key
+        if "REPLACE" in v.upper() or v == "sk-REPLACE_ME_WITH_REAL_KEY":
+            logger.warning(
+                "⚠ OPENAI_API_KEY is set to placeholder value - "
+                "Replace with real key from https://platform.openai.com/api-keys"
+            )
+            return v
+        # Valid key format detected
+        logger.info(f"✓ OPENAI_API_KEY loaded successfully (starts with: {v[:15]}...)")
         return v
 
     # ============================================
@@ -217,12 +241,18 @@ try:
     settings = Settings()
     logger.info(f"Settings loaded: APP_ENV={settings.APP_ENV}")
     logger.info(f"CORS origins configured: {settings.get_cors_origins()}")
+
+    # Verify critical settings
     if not settings.DATABASE_URL:
         logger.warning("DATABASE_URL not configured - database features disabled")
     if not settings.JWT_SECRET_KEY:
         logger.warning("JWT_SECRET_KEY not configured - authentication disabled")
     if not settings.OPENAI_API_KEY:
         logger.warning("OPENAI_API_KEY not configured - AI chatbot features disabled")
+
+    # Runtime verification - confirm OPENAI_API_KEY is accessible
+    logger.info(f"Runtime check - OPENAI_API_KEY loaded: {settings.OPENAI_API_KEY is not None}")
+
 except Exception as e:
     logger.error(f"Failed to load settings: {e}")
     # Create minimal settings to allow app to start for healthcheck

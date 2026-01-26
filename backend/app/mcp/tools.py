@@ -445,4 +445,5 @@ def invoke_tool(tool_name: str, arguments: dict) -> dict:
     result = handler(validated_input)
 
     # Return as dict for JSON serialization
+    # TaskResult.model_dump() now handles datetime serialization
     return result.model_dump()

@@ -19,7 +19,7 @@ A comprehensive todo application demonstrating evolution from CLI to full-stack 
 ## 🚀 Live Demo
 
 - **Backend API**: [Hugging Face Spaces](https://huggingface.co/spaces/YOUR_USERNAME/todo-ai-chatbot) (Replace with actual URL)
-- **Frontend**: [Vercel Deployment](https://your-todo-app.vercel.app) (Replace with actual URL)
+- **Frontend**: [Vercel Deployment](https://todo-app-hackathon-mytask.vercel.app/) (Replace with actual URL)
 
 ## ✨ Features (Phase III)
 

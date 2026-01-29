@@ -2,33 +2,34 @@
  * API Client Module
  *
  * Handles all HTTP communication with the FastAPI backend.
- * Features:
- * - Automatic JWT token injection from localStorage
- * - 401 error handling with automatic redirect to login
- * - Type-safe request/response handling
- * - Centralized error handling
+ * Uses NEXT_PUBLIC_API_BASE_URL environment variable.
+ *
+ * Production: https://tayyabaziz-todo-app-phase2.hf.space
+ * Development: http://localhost:8000
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Get API base URL from environment - NO localhost fallback in production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
+// Validate API URL is set
+if (!API_BASE_URL && typeof window !== 'undefined') {
+  console.error('[API] NEXT_PUBLIC_API_BASE_URL is not set!');
+  console.error('[API] Set this in Vercel Environment Variables');
+}
 
 interface ApiError extends Error {
   status?: number;
-  data?: any;
+  data?: unknown;
 }
 
 /**
- * Main API client function for making authenticated requests to the backend.
- *
- * @param endpoint - API endpoint path (e.g., '/api/auth/login')
- * @param options - Fetch API options
- * @returns Parsed JSON response
- * @throws ApiError on non-2xx responses or network errors
+ * Main API client function for making authenticated requests.
  */
-export async function apiClient<T = any>(
+export async function apiClient<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  // Get JWT token from localStorage if available
+  // Get JWT token from localStorage
   const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
 
   // Build headers
@@ -45,24 +46,29 @@ export async function apiClient<T = any>(
   // Construct full URL
   const url = `${API_BASE_URL}${endpoint}`;
 
+  // Log request in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[API] ${options.method || 'GET'} ${url}`);
+  }
+
   try {
-    // Make the request
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // Include cookies for CORS
     });
 
-    // Handle 401 Unauthorized - token expired or invalid
+    // Log response status
+    console.log(`[API] Response: ${response.status} ${response.statusText}`);
+
+    // Handle 401 Unauthorized
     if (response.status === 401) {
-      // Clear invalid token
       if (typeof window !== 'undefined') {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('user_id');
-
-        // Redirect to login page
-        window.location.href = '/';
+        console.warn('[API] 401 Unauthorized - clearing tokens');
+        window.location.href = '/login';
       }
-
       const error = new Error('Authentication required') as ApiError;
       error.status = 401;
       throw error;
@@ -71,6 +77,7 @@ export async function apiClient<T = any>(
     // Handle other non-2xx responses
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`[API] Error ${response.status}:`, errorData);
       const error = new Error(
         errorData.detail || `Request failed with status ${response.status}`
       ) as ApiError;
@@ -79,20 +86,20 @@ export async function apiClient<T = any>(
       throw error;
     }
 
-    // Parse and return JSON response
-    // Handle 204 No Content responses
+    // Handle 204 No Content
     if (response.status === 204) {
       return undefined as T;
     }
 
     return await response.json();
   } catch (error) {
-    // Re-throw ApiError instances
+    // Log network errors
+    console.error('[API] Request failed:', error);
+
     if ((error as ApiError).status) {
       throw error;
     }
 
-    // Wrap network errors
     const apiError = new Error(
       `Network error: ${(error as Error).message}`
     ) as ApiError;
@@ -101,18 +108,18 @@ export async function apiClient<T = any>(
 }
 
 /**
- * Helper function for GET requests
+ * GET request helper
  */
-export async function apiGet<T = any>(endpoint: string): Promise<T> {
+export async function apiGet<T = unknown>(endpoint: string): Promise<T> {
   return apiClient<T>(endpoint, { method: 'GET' });
 }
 
 /**
- * Helper function for POST requests
+ * POST request helper
  */
-export async function apiPost<T = any>(
+export async function apiPost<T = unknown>(
   endpoint: string,
-  data?: any
+  data?: unknown
 ): Promise<T> {
   return apiClient<T>(endpoint, {
     method: 'POST',
@@ -121,11 +128,11 @@ export async function apiPost<T = any>(
 }
 
 /**
- * Helper function for PUT requests
+ * PUT request helper
  */
-export async function apiPut<T = any>(
+export async function apiPut<T = unknown>(
   endpoint: string,
-  data?: any
+  data?: unknown
 ): Promise<T> {
   return apiClient<T>(endpoint, {
     method: 'PUT',
@@ -134,8 +141,8 @@ export async function apiPut<T = any>(
 }
 
 /**
- * Helper function for DELETE requests
+ * DELETE request helper
  */
-export async function apiDelete<T = any>(endpoint: string): Promise<T> {
+export async function apiDelete<T = unknown>(endpoint: string): Promise<T> {
   return apiClient<T>(endpoint, { method: 'DELETE' });
 }

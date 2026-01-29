@@ -4,7 +4,7 @@ import path from 'path';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
   },
   // Fix: Explicitly set the output file tracing root to the parent directory
   // This prevents Next.js from incorrectly inferring the workspace root when

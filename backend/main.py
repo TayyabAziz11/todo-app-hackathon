@@ -6,6 +6,7 @@ works even if other imports or database connections fail.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -19,12 +20,49 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =============================================================================
+# DETECT DEPLOYMENT ENVIRONMENT
+# =============================================================================
+def detect_environment() -> tuple[str, str]:
+    """
+    Detect runtime environment and configure root_path for reverse proxy support.
+
+    Hugging Face Spaces serves apps behind /spaces/<username>/<space-name>/
+    FastAPI needs to know this via root_path to generate correct OpenAPI/docs URLs.
+
+    Returns:
+        tuple[str, str]: (environment_name, root_path)
+    """
+    # Check for Hugging Face Spaces
+    space_id = os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID")
+
+    if space_id:
+        # Format: username/space-name
+        root_path = f"/spaces/{space_id}"
+        logger.info(f"✓ Detected Hugging Face Spaces environment")
+        logger.info(f"  SPACE_ID: {space_id}")
+        logger.info(f"  root_path: {root_path}")
+        return "huggingface", root_path
+
+    # Local or other deployment (Railway, etc.)
+    logger.info("✓ Detected local/standard deployment")
+    logger.info("  root_path: (none)")
+    return "local", ""
+
+
+# Detect environment and get root_path
+ENV_NAME, ROOT_PATH = detect_environment()
+
+# =============================================================================
 # CREATE APP IMMEDIATELY - before any imports that might fail
 # =============================================================================
 app = FastAPI(
     title="Todo API",
     version="3.0.0",
-    description="Phase III: AI-Powered Todo Chatbot with Stateless Conversation Management"
+    description="Phase III: AI-Powered Todo Chatbot with Stateless Conversation Management",
+    root_path=ROOT_PATH,  # Critical for Hugging Face Spaces
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # =============================================================================
@@ -61,8 +99,13 @@ async def health_check():
 
 @app.get("/", tags=["Health"])
 async def root():
-    """Root endpoint - redirects to docs."""
-    return {"message": "Todo API v3.0.0 - AI-Powered Chatbot", "docs": "/docs", "health": "/health"}
+    """Root endpoint - API information."""
+    return {
+        "message": "Todo API v3.0.0 - AI-Powered Chatbot",
+        "environment": ENV_NAME,
+        "docs": f"{ROOT_PATH}/docs" if ROOT_PATH else "/docs",
+        "health": f"{ROOT_PATH}/health" if ROOT_PATH else "/health"
+    }
 
 
 # =============================================================================
@@ -123,12 +166,38 @@ setup_routers()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
-    logger.info("Application starting...")
+    logger.info("=" * 70)
+    logger.info("Todo API v3.0.0 - Starting...")
+    logger.info("=" * 70)
+
+    # Log environment information
+    logger.info(f"Environment: {ENV_NAME}")
+    logger.info(f"Root Path: {ROOT_PATH if ROOT_PATH else '(none - standard deployment)'}")
+
+    # Log accessible URLs
+    if ROOT_PATH:
+        logger.info("")
+        logger.info("Accessible URLs (via reverse proxy):")
+        logger.info(f"  - Health: {ROOT_PATH}/health")
+        logger.info(f"  - Docs: {ROOT_PATH}/docs")
+        logger.info(f"  - ReDoc: {ROOT_PATH}/redoc")
+        logger.info(f"  - API: {ROOT_PATH}/api/*")
+    else:
+        logger.info("")
+        logger.info("Accessible URLs (direct):")
+        logger.info("  - Health: /health")
+        logger.info("  - Docs: /docs")
+        logger.info("  - ReDoc: /redoc")
+        logger.info("  - API: /api/*")
+
+    logger.info("")
 
     # Initialize database (non-blocking)
     init_database()
 
+    logger.info("=" * 70)
     logger.info("Application ready to serve requests")
+    logger.info("=" * 70)
     yield
 
     logger.info("Application shutting down...")

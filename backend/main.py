@@ -8,9 +8,12 @@ works even if other imports or database connections fail.
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Callable
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 # Configure logging FIRST
 logging.basicConfig(
@@ -20,50 +23,55 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# DETECT DEPLOYMENT ENVIRONMENT
+# REVERSE PROXY MIDDLEWARE - Detect X-Forwarded-Prefix header
 # =============================================================================
-def detect_environment() -> tuple[str, str]:
+class ReverseProxyMiddleware(BaseHTTPMiddleware):
     """
-    Detect runtime environment and configure root_path for reverse proxy support.
+    Middleware to handle reverse proxy headers (Hugging Face Spaces, Cloudflare, etc.).
 
-    Hugging Face Spaces serves apps behind /spaces/<username>/<space-name>/
-    FastAPI needs to know this via root_path to generate correct OpenAPI/docs URLs.
+    Reads the X-Forwarded-Prefix header and updates the ASGI scope's root_path.
+    This allows FastAPI to generate correct URLs for OpenAPI, docs, and API routes
+    when running behind a reverse proxy.
 
-    Returns:
-        tuple[str, str]: (environment_name, root_path)
+    Hugging Face Spaces sets: X-Forwarded-Prefix: /spaces/<username>/<space-name>
     """
-    # Check for Hugging Face Spaces
-    space_id = os.getenv("SPACE_ID") or os.getenv("HF_SPACE_ID")
 
-    if space_id:
-        # Format: username/space-name
-        root_path = f"/spaces/{space_id}"
-        logger.info(f"✓ Detected Hugging Face Spaces environment")
-        logger.info(f"  SPACE_ID: {space_id}")
-        logger.info(f"  root_path: {root_path}")
-        return "huggingface", root_path
+    async def dispatch(self, request: Request, call_next: Callable):
+        # Read the X-Forwarded-Prefix header
+        forwarded_prefix = request.headers.get("x-forwarded-prefix", "").strip()
 
-    # Local or other deployment (Railway, etc.)
-    logger.info("✓ Detected local/standard deployment")
-    logger.info("  root_path: (none)")
-    return "local", ""
+        if forwarded_prefix:
+            # Update the ASGI scope to include the proxy prefix
+            request.scope["root_path"] = forwarded_prefix
 
+            # Log proxy detection (only once per unique prefix to avoid spam)
+            if not hasattr(self, "_logged_prefixes"):
+                self._logged_prefixes = set()
 
-# Detect environment and get root_path
-ENV_NAME, ROOT_PATH = detect_environment()
+            if forwarded_prefix not in self._logged_prefixes:
+                logger.info(f"✓ Reverse proxy detected via X-Forwarded-Prefix")
+                logger.info(f"  Proxy prefix: {forwarded_prefix}")
+                logger.info(f"  Routes will be served under: {forwarded_prefix}/*")
+                self._logged_prefixes.add(forwarded_prefix)
+
+        response = await call_next(request)
+        return response
+
 
 # =============================================================================
-# CREATE APP IMMEDIATELY - before any imports that might fail
+# CREATE APP - No hardcoded root_path (middleware handles it dynamically)
 # =============================================================================
 app = FastAPI(
     title="Todo API",
     version="3.0.0",
     description="Phase III: AI-Powered Todo Chatbot with Stateless Conversation Management",
-    root_path=ROOT_PATH,  # Critical for Hugging Face Spaces
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# Add reverse proxy middleware FIRST (before CORS)
+app.add_middleware(ReverseProxyMiddleware)
 
 # =============================================================================
 # CORS MIDDLEWARE - must be registered at app creation, NOT in lifespan
@@ -98,13 +106,17 @@ async def health_check():
 
 
 @app.get("/", tags=["Health"])
-async def root():
-    """Root endpoint - API information."""
+async def root(request: Request):
+    """Root endpoint - API information with dynamic URLs based on reverse proxy."""
+    root_path = request.scope.get("root_path", "")
+
     return {
         "message": "Todo API v3.0.0 - AI-Powered Chatbot",
-        "environment": ENV_NAME,
-        "docs": f"{ROOT_PATH}/docs" if ROOT_PATH else "/docs",
-        "health": f"{ROOT_PATH}/health" if ROOT_PATH else "/health"
+        "reverse_proxy": bool(root_path),
+        "root_path": root_path if root_path else None,
+        "docs": f"{root_path}/docs" if root_path else "/docs",
+        "health": f"{root_path}/health" if root_path else "/health",
+        "redoc": f"{root_path}/redoc" if root_path else "/redoc"
     }
 
 
@@ -169,27 +181,20 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 70)
     logger.info("Todo API v3.0.0 - Starting...")
     logger.info("=" * 70)
-
-    # Log environment information
-    logger.info(f"Environment: {ENV_NAME}")
-    logger.info(f"Root Path: {ROOT_PATH if ROOT_PATH else '(none - standard deployment)'}")
-
-    # Log accessible URLs
-    if ROOT_PATH:
-        logger.info("")
-        logger.info("Accessible URLs (via reverse proxy):")
-        logger.info(f"  - Health: {ROOT_PATH}/health")
-        logger.info(f"  - Docs: {ROOT_PATH}/docs")
-        logger.info(f"  - ReDoc: {ROOT_PATH}/redoc")
-        logger.info(f"  - API: {ROOT_PATH}/api/*")
-    else:
-        logger.info("")
-        logger.info("Accessible URLs (direct):")
-        logger.info("  - Health: /health")
-        logger.info("  - Docs: /docs")
-        logger.info("  - ReDoc: /redoc")
-        logger.info("  - API: /api/*")
-
+    logger.info("")
+    logger.info("Reverse Proxy Support: Enabled")
+    logger.info("  - Automatically detects X-Forwarded-Prefix header")
+    logger.info("  - Works with: Hugging Face Spaces, Cloudflare, nginx, etc.")
+    logger.info("  - Local development: routes served at /docs, /health, /api/*")
+    logger.info("  - Behind proxy: routes served at <prefix>/docs, <prefix>/health, etc.")
+    logger.info("")
+    logger.info("Registered Routes:")
+    logger.info("  - Health: /health")
+    logger.info("  - Docs: /docs")
+    logger.info("  - ReDoc: /redoc")
+    logger.info("  - Auth: /api/auth/*")
+    logger.info("  - Todos: /api/{user_id}/tasks")
+    logger.info("  - Chat: /api/{user_id}/chat")
     logger.info("")
 
     # Initialize database (non-blocking)
@@ -197,6 +202,8 @@ async def lifespan(app: FastAPI):
 
     logger.info("=" * 70)
     logger.info("Application ready to serve requests")
+    logger.info("  Local: http://localhost:8000/docs")
+    logger.info("  Proxy: Detected dynamically from X-Forwarded-Prefix header")
     logger.info("=" * 70)
     yield
 

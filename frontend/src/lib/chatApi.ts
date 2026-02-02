@@ -1,14 +1,18 @@
 /**
- * Chat API Client
+ * Chat API Client - Phase 3 Only
  *
- * Handles communication with the backend chat API endpoint.
- * Uses NEXT_PUBLIC_API_BASE_URL environment variable.
+ * Handles communication with the Phase 3 chatbot backend.
+ * Uses NEXT_PUBLIC_CHAT_API_URL environment variable (separate from Phase 2).
  *
- * Note: Chat API is Phase 3 only - separate from Phase 2 backend.
+ * Note: Chat API is Phase 3 only - deployed separately from Phase 2 auth/todos.
  */
 
-// Get API base URL from environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// Get Chat API URL from dedicated Phase 3 environment variable
+const CHAT_API_URL = process.env.NEXT_PUBLIC_CHAT_API_URL || '';
+
+if (!CHAT_API_URL && typeof window !== 'undefined') {
+  console.error('[ChatAPI] NEXT_PUBLIC_CHAT_API_URL is not set!');
+}
 
 export interface ChatMessage {
   role: "user" | "assistant" | "tool";
@@ -50,7 +54,7 @@ export interface SendMessageOptions {
 export async function sendMessage(options: SendMessageOptions): Promise<ChatResponse> {
   const { message, conversationId, userId, authToken } = options;
 
-  const endpoint = `${API_BASE_URL}/api/${userId}/chat`;
+  const endpoint = `${CHAT_API_URL}/api/${userId}/chat`;
 
   console.log(`[ChatAPI] POST ${endpoint}`);
 

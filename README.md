@@ -9,6 +9,355 @@ A comprehensive todo application demonstrating evolution from CLI to full-stack 
 | **Phase I** | [CLI Application](#phase-i-todo-cli-interactive-mode) | ✅ Complete |
 | **Phase II** | [Full-Stack Web App](#phase-ii-full-stack-web-application) | ✅ Complete |
 | **Phase III** | [AI-Powered Chatbot](#phase-iii-ai-powered-todo-chatbot) | ✅ Complete |
+| **Phase IV** | [Kubernetes Deployment](#phase-iv-kubernetes-deployment-production-ready) | ✅ Complete |
+
+---
+
+# Phase IV: Kubernetes Deployment (Production-Ready)
+
+**Cloud-native deployment** with production-ready Helm charts, Docker containerization, Kubernetes manifests, and OAuth 2.0 integration for local and cloud environments.
+
+## 🚀 Quick Start (Phase IV)
+
+### Prerequisites
+- **Minikube** or Kubernetes cluster
+- **Helm** 3.x
+- **kubectl** CLI
+- **Docker** (for building images)
+
+### Local Development with Kubernetes
+
+#### 1. Start Minikube
+```bash
+minikube start --cpus=4 --memory=8192
+minikube addons enable ingress
+```
+
+#### 2. Deploy Backend
+```bash
+# Configure secrets (copy example and fill in real values)
+cp charts/todo-backend/values-local.example.yaml charts/todo-backend/values-local.yaml
+# Edit values-local.yaml with your credentials
+
+# Install backend
+helm install todo-backend charts/todo-backend \
+  -f charts/todo-backend/values.yaml \
+  -f charts/todo-backend/values-local.yaml \
+  -n todo-dev --create-namespace
+
+# Port-forward for local access
+kubectl port-forward -n todo-dev svc/todo-backend 8000:8000
+```
+
+#### 3. Deploy Frontend
+```bash
+# Install frontend
+helm install todo-frontend charts/todo-frontend \
+  -f charts/todo-frontend/values.yaml \
+  -f charts/todo-frontend/values-local.yaml \
+  -n todo-dev
+
+# Port-forward for local access
+kubectl port-forward -n todo-dev svc/todo-frontend 3000:3000
+```
+
+#### 4. Access Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+## ✨ Features (Phase IV)
+
+### Kubernetes Infrastructure
+- 🐳 **Docker Containerization** - Multi-stage builds for both services
+- ⚓ **Helm Charts** - Parameterized Kubernetes manifests
+- 🔧 **ConfigMaps** - Environment-specific configuration
+- 🔐 **Kubernetes Secrets** - Secure credential management
+- 📊 **Resource Management** - CPU/memory limits and requests
+- 🔍 **Health Checks** - Liveness and readiness probes
+- 📈 **Horizontal Pod Autoscaling** - Automatic scaling based on CPU/memory
+
+### Multi-Environment Support
+- 🏠 **Local Development** (values-local.yaml)
+  - SQLite database
+  - Port-forward access (localhost:3000, localhost:8000)
+  - Reduced resource requirements
+  - Fast health checks
+- 🧪 **Dev Cluster** (values-dev.yaml)
+  - In-cluster service communication
+  - PostgreSQL database
+  - Ingress configuration
+  - External secret management
+- 🚀 **Production** (values.yaml base)
+  - Horizontal pod autoscaling
+  - Resource limits and requests
+  - Health monitoring
+  - Security best practices
+
+### OAuth 2.0 Integration
+- 🔑 **Google OAuth** - Sign in with Google
+- 🐙 **GitHub OAuth** - Sign in with GitHub
+- 🔐 **JWT Authentication** - Stateless token-based auth
+- 🛡️ **Environment-Specific Redirect URIs** - Proper OAuth flow for each environment
+
+## 🏗️ Architecture (Phase IV)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Kubernetes Cluster                        │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │                  Namespace: todo-dev                    │ │
+│  │                                                          │ │
+│  │  ┌──────────────────────┐    ┌──────────────────────┐  │ │
+│  │  │   Frontend Service   │    │   Backend Service    │  │ │
+│  │  │    (ClusterIP)       │    │    (ClusterIP)       │  │ │
+│  │  │    Port: 3000        │    │    Port: 8000        │  │ │
+│  │  └──────────┬───────────┘    └──────────┬───────────┘  │ │
+│  │             │                            │               │ │
+│  │  ┌──────────▼───────────┐    ┌──────────▼───────────┐  │ │
+│  │  │  Frontend Deployment │    │  Backend Deployment  │  │ │
+│  │  │  • Next.js App       │    │  • FastAPI App       │  │ │
+│  │  │  • React UI          │    │  • SQLModel ORM      │  │ │
+│  │  │  • Tailwind CSS      │    │  • OpenAI Agents     │  │ │
+│  │  │  • OpenAI ChatKit    │    │  • MCP Tools         │  │ │
+│  │  │  Replicas: 1-3       │    │  Replicas: 1-3       │  │ │
+│  │  │  HPA: CPU-based      │    │  HPA: CPU-based      │  │ │
+│  │  └──────────┬───────────┘    └──────────┬───────────┘  │ │
+│  │             │                            │               │ │
+│  │  ┌──────────▼───────────┐    ┌──────────▼───────────┐  │ │
+│  │  │  Frontend ConfigMap  │    │  Backend ConfigMap   │  │ │
+│  │  │  • NEXT_PUBLIC_*     │    │  • FRONTEND_URL      │  │ │
+│  │  │  • API URLs          │    │  • CORS_ORIGINS      │  │ │
+│  │  └──────────────────────┘    │  • OAUTH_REDIRECT_*  │  │ │
+│  │                               └──────────┬───────────┘  │ │
+│  │                                          │               │ │
+│  │                               ┌──────────▼───────────┐  │ │
+│  │                               │   Backend Secrets    │  │ │
+│  │                               │  • DATABASE_URL      │  │ │
+│  │                               │  • JWT_SECRET_KEY    │  │ │
+│  │                               │  • OPENAI_API_KEY    │  │ │
+│  │                               │  • GOOGLE_CLIENT_*   │  │ │
+│  │                               │  • GITHUB_CLIENT_*   │  │ │
+│  │                               └──────────────────────┘  │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+          ┌──────────────────────────────────┐
+          │  External Database (Optional)    │
+          │  • PostgreSQL (Neon/Cloud)       │
+          │  • SQLite (Local Development)    │
+          └──────────────────────────────────┘
+```
+
+## 📦 Helm Charts
+
+### Backend Chart (`charts/todo-backend/`)
+```yaml
+# Key files:
+├── Chart.yaml                    # Chart metadata
+├── values.yaml                   # Default values
+├── values-local.yaml             # Local development overrides
+├── values-local.example.yaml     # Template for secrets
+├── values-dev.yaml               # Dev cluster overrides
+└── templates/
+    ├── deployment.yaml           # Backend pods
+    ├── service.yaml              # ClusterIP service
+    ├── configmap.yaml            # Environment variables
+    ├── secret-local.yaml         # Local secrets (auto-created)
+    ├── secrets.yaml              # External secrets reference
+    └── hpa.yaml                  # Horizontal Pod Autoscaler
+```
+
+### Frontend Chart (`charts/todo-frontend/`)
+```yaml
+# Key files:
+├── Chart.yaml                    # Chart metadata
+├── values.yaml                   # Default values
+├── values-local.yaml             # Local development overrides
+├── values-dev.yaml               # Dev cluster overrides
+└── templates/
+    ├── deployment.yaml           # Frontend pods
+    ├── service.yaml              # ClusterIP service
+    └── configmap.yaml            # Environment variables
+```
+
+## 🔧 Configuration
+
+### Secret Management
+
+**Local Development:**
+```bash
+# Secrets auto-created from values-local.yaml
+# Edit this file with real credentials (never commit!)
+cp charts/todo-backend/values-local.example.yaml charts/todo-backend/values-local.yaml
+```
+
+**Dev/Production:**
+```bash
+# Create secrets manually or use external secret manager
+kubectl create secret generic todo-backend-secrets \
+  --namespace=todo-dev \
+  --from-literal=DATABASE_URL='postgresql://...' \
+  --from-literal=SECRET_KEY='your-jwt-secret-key' \
+  --from-literal=OPENAI_API_KEY='sk-...' \
+  --from-literal=GOOGLE_CLIENT_ID='...' \
+  --from-literal=GOOGLE_CLIENT_SECRET='...' \
+  --from-literal=GITHUB_CLIENT_ID='...' \
+  --from-literal=GITHUB_CLIENT_SECRET='...'
+```
+
+### OAuth Setup
+
+Configure OAuth redirect URIs for your environment:
+
+**Local Development (port-forward):**
+- Google: `http://localhost:3000/auth/google/callback`
+- GitHub: `http://localhost:3000/auth/github/callback`
+
+**Dev Cluster (with ingress):**
+- Google: `https://todo-dev.example.com/auth/google/callback`
+- GitHub: `https://todo-dev.example.com/auth/github/callback`
+
+📚 **Full OAuth Guide:** [charts/OAUTH_SETUP_GUIDE.md](./charts/OAUTH_SETUP_GUIDE.md)
+
+## 🐳 Docker Images
+
+### Backend Dockerfile
+```dockerfile
+# Multi-stage build for production
+FROM python:3.11-slim as base
+# Install dependencies
+FROM base as production
+# Copy application code
+# Run with uvicorn
+```
+
+**Build:**
+```bash
+cd backend
+docker build -t todo-backend:latest .
+docker build -t todo-backend:v1.0.2-local --target local .
+```
+
+### Frontend Dockerfile
+```dockerfile
+# Multi-stage build with Next.js optimization
+FROM node:18-alpine as dependencies
+FROM node:18-alpine as builder
+FROM node:18-alpine as runner
+# Optimized production image
+```
+
+**Build:**
+```bash
+cd frontend
+docker build -t todo-frontend:latest .
+```
+
+## 📚 Documentation (Phase IV)
+
+| Document | Purpose |
+|----------|---------|
+| [charts/DEPLOYMENT_GUIDE.md](./charts/DEPLOYMENT_GUIDE.md) | Complete Kubernetes deployment walkthrough |
+| [charts/OAUTH_SETUP_GUIDE.md](./charts/OAUTH_SETUP_GUIDE.md) | OAuth 2.0 configuration for Google & GitHub |
+| [backend/DOCKER_BUILD_GUIDE.md](./backend/DOCKER_BUILD_GUIDE.md) | Backend Docker containerization |
+| [frontend/DOCKER_BUILD.md](./frontend/DOCKER_BUILD.md) | Frontend Docker containerization |
+| [specs/004-phase4-local-k8s/spec.md](./specs/004-phase4-local-k8s/spec.md) | Phase IV requirements |
+| [specs/004-phase4-local-k8s/plan.md](./specs/004-phase4-local-k8s/plan.md) | Implementation plan |
+
+## 🎯 Deployment Scenarios
+
+### Scenario 1: Local Development (Port-Forward)
+```bash
+# Terminal 1: Backend
+kubectl port-forward -n todo-dev svc/todo-backend 8000:8000
+
+# Terminal 2: Frontend
+kubectl port-forward -n todo-dev svc/todo-frontend 3000:3000
+
+# Browser
+open http://localhost:3000
+```
+
+### Scenario 2: Dev Cluster (In-Cluster)
+```bash
+# Deploy with dev values
+helm upgrade todo-backend charts/todo-backend \
+  -f charts/todo-backend/values.yaml \
+  -f charts/todo-backend/values-dev.yaml \
+  -n todo-dev
+
+helm upgrade todo-frontend charts/todo-frontend \
+  -f charts/todo-frontend/values.yaml \
+  -f charts/todo-frontend/values-dev.yaml \
+  -n todo-dev
+
+# Access via ingress
+# https://todo-dev.example.com
+```
+
+### Scenario 3: Production Deployment
+```bash
+# Use external secret manager (Sealed Secrets, Vault, etc.)
+# Deploy with production values
+helm upgrade todo-backend charts/todo-backend \
+  -f charts/todo-backend/values.yaml \
+  -f charts/todo-backend/values-production.yaml \
+  -n todo-prod --create-namespace
+```
+
+## 🔍 Verification
+
+### Check Deployments
+```bash
+# View all resources
+kubectl get all -n todo-dev
+
+# Check pod status
+kubectl get pods -n todo-dev
+
+# View logs
+kubectl logs -n todo-dev deployment/todo-backend -f
+kubectl logs -n todo-dev deployment/todo-frontend -f
+```
+
+### Test OAuth Login
+```bash
+# Verify OAuth environment variables
+kubectl exec -n todo-dev deployment/todo-backend -- \
+  env | grep -E "GOOGLE|GITHUB"
+
+# Test OAuth endpoints
+kubectl exec -n todo-dev deployment/todo-backend -- \
+  curl -s http://localhost:8000/api/auth/google/url
+```
+
+## 🎓 Key Learnings (Phase IV)
+
+### Helm Chart Parameterization
+- **Problem**: Hard-coded values in Kubernetes manifests
+- **Solution**: Helm values files for environment-specific configuration
+- **Benefit**: Single chart deployed to multiple environments
+
+### Secret Management
+- **Problem**: Secrets in version control
+- **Solution**: values-local.example.yaml template + .gitignore
+- **Benefit**: Safe local development without committing credentials
+
+### Multi-Stage Docker Builds
+- **Problem**: Large production images with build tools
+- **Solution**: Multi-stage builds (dependencies → builder → runner)
+- **Benefit**: Smaller images, faster deployments, better security
+
+## 📊 Phase IV Metrics
+
+- **2 Helm Charts** - Backend and Frontend
+- **3 Environment Configurations** - Local, Dev, Production
+- **4 Documentation Guides** - Deployment, OAuth, Docker (backend + frontend)
+- **7 Kubernetes Resources** - Deployment, Service, ConfigMap, Secret, HPA, Ingress, Namespace
+- **100% Secret-Safe** - No credentials in version control
+- **Production-Ready** - Resource limits, health checks, autoscaling
 
 ---
 

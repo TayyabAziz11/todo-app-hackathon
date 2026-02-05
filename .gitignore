@@ -155,3 +155,9 @@ yarn-error.log*
 *.env
 !.env.example
 *.tsbuildinfo
+
+# Minikube binary
+minikube-linux-amd64
+
+# Temporary port files
+8000

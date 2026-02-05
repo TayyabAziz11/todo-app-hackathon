@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env*
+.git
+.gitignore
+.gitattributes
+README.md
+tests/
+venv/
+*.md
+Procfile
+railway.json
+requirements-dev.txt
+alembic/
+alembic.ini

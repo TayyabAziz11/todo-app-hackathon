@@ -1,0 +1,32 @@
+# ========================================================
+# Phase 2 Backend Dependencies (Traditional REST API)
+# ========================================================
+# NO OpenAI / MCP dependencies (those are Phase 3 only)
+
+# FastAPI and ASGI server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database (SQLModel + PostgreSQL driver)
+sqlmodel==0.0.22
+sqlalchemy>=2.0.0
+psycopg[binary]>=3.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1  # Pin bcrypt version for passlib compatibility
+
+# Database migrations (optional - use if you need Alembic)
+alembic==1.13.3
+
+# Configuration and validation
+python-dotenv==1.0.1
+pydantic[email]==2.10.3
+pydantic-settings==2.7.1
+
+# HTTP client (for OAuth)
+httpx==0.27.0
+
+# Multipart form data (for file uploads)
+python-multipart==0.0.20

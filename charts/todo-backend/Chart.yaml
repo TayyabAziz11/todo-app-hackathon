@@ -1,0 +1,13 @@
+apiVersion: v2
+name: todo-backend
+description: A Helm chart for Todo Backend FastAPI application
+type: application
+version: 1.0.0
+appVersion: "v1.0.0"
+keywords:
+  - todo
+  - backend
+  - fastapi
+  - python
+maintainers:
+  - name: Todo Team

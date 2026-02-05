@@ -1,0 +1,93 @@
+# =============================================================================
+# Docker Build Context Exclusions
+# =============================================================================
+# This file reduces Docker build context size and prevents sensitive files
+# from being included in the container image
+
+# Python virtual environments (will be created fresh in container)
+venv/
+env/
+ENV/
+.venv/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Testing and coverage
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+*.cover
+
+# Environment files (NEVER include secrets in images)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Git repository
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Alembic migrations (may want to include these - adjust if needed)
+alembic/versions/*.py
+
+# Phase 2 legacy files
+*.phase2
+Dockerfile.phase2
+.dockerignore.phase2
+main_phase2.py
+requirements_phase2.txt
+
+# Deployment documentation
+DEPLOY_*.md
+PHASE2_*.md
+OPENAI_SETUP.md
+
+# Railway and platform-specific configs
+Procfile
+railway.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Database files (should use external DB, not local files)
+*.db
+*.sqlite
+*.sqlite3
+
+# Development requirements
+requirements-dev.txt
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

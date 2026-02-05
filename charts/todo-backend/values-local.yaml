@@ -1,0 +1,97 @@
+# Local development via port-forward
+# Usage: helm install -f values.yaml -f values-local.yaml
+#
+# This configuration is for local browser testing where:
+# - Frontend is accessed at http://localhost:3000 (via kubectl port-forward)
+# - Backend is accessed at http://localhost:8000 (via kubectl port-forward)
+#
+# To use:
+#   Terminal 1: kubectl port-forward -n todo-dev svc/todo-backend 8000:8000
+#   Terminal 2: kubectl port-forward -n todo-dev svc/todo-frontend 3000:3000
+#   Browser: http://localhost:3000
+#
+# SECURITY NOTE:
+# This file contains placeholder values for demonstration purposes.
+# For actual local development, copy values-local.example.yaml to create your own
+# values-local.yaml with real secrets, or add values-local.yaml to .gitignore.
+
+# Use local development image with PostgreSQL/SQLite support
+image:
+  tag: "v1.0.2-local"
+
+# Override for port-forward local testing
+configMap:
+  FRONTEND_URL: "http://localhost:3000"
+  CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000"
+
+# OAuth redirect URIs for local development
+# IMPORTANT: These must match the redirect URIs configured in:
+# - Google Cloud Console: https://console.cloud.google.com/
+# - GitHub OAuth Apps: https://github.com/settings/developers
+oauthRedirectUris:
+  google: "http://localhost:3000/auth/google/callback"
+  github: "http://localhost:3000/auth/github/callback"
+
+# ============================================
+# LOCAL DEVELOPMENT SECRETS
+# ============================================
+# IMPORTANT: These secrets are for LOCAL DEVELOPMENT ONLY
+# Never use this pattern in production
+#
+# This creates a Kubernetes Secret with local development values
+# Set createLocalSecret: true to create the secret automatically
+
+createLocalSecret: true
+
+localSecrets:
+  # Database URL
+  # For local development, you can use:
+  # - SQLite: "sqlite:///./todo_local.db"
+  # - PostgreSQL: "postgresql+psycopg://user:password@localhost:5432/todo_dev"
+  # - Neon: "postgresql+psycopg://user:password@host.neon.tech/dbname?sslmode=require"
+  databaseUrl: "sqlite:///./todo_local.db"
+
+  # JWT Secret Key (minimum 32 characters for HS256)
+  # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+  secretKey: "change-me-generate-a-secure-random-key-with-at-least-32-characters"
+
+  # OpenAI API Key
+  # Get your key from: https://platform.openai.com/api-keys
+  # If you don't have one, use a placeholder - app will start without AI features
+  openaiApiKey: "sk-your-openai-api-key-here"
+
+  # ============================================
+  # OAuth Configuration (Optional but Recommended)
+  # ============================================
+  # Google OAuth - Get credentials from https://console.cloud.google.com/
+  # Create OAuth 2.0 Client ID and add authorized redirect URI:
+  # http://localhost:3000/auth/google/callback (for local dev)
+  googleClientId: "your-google-client-id.apps.googleusercontent.com"
+  googleClientSecret: "your-google-client-secret"
+
+  # GitHub OAuth - Get credentials from https://github.com/settings/developers
+  # Create OAuth App and set callback URL:
+  # http://localhost:3000/auth/github/callback (for local dev)
+  githubClientId: "your-github-client-id"
+  githubClientSecret: "your-github-client-secret"
+
+# Reduced resource requirements for local testing
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Faster health checks for development
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 10
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+# Development namespace
+namespace: todo-dev

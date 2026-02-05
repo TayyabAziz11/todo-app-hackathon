@@ -1,0 +1,53 @@
+# Local development via port-forward
+# Usage: helm install -f values.yaml -f values-local.yaml
+#
+# This configuration is for local browser testing where:
+# - Frontend is accessed at http://localhost:3000 (via kubectl port-forward)
+# - Backend is accessed at http://localhost:8000 (via kubectl port-forward)
+#
+# IMPORTANT: These env vars are BAKED INTO THE DOCKER IMAGE at build time.
+# If you change these values, you MUST:
+#   1. Rebuild the Docker image with new values
+#   2. Update the image tag
+#   3. Deploy the new image
+#
+# Build command:
+#   docker build \
+#     --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 \
+#     --build-arg NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000 \
+#     -t todo-frontend:v1.0.2-local .
+
+# ConfigMap is for documentation only - values are build-time
+configMap:
+  NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"
+  NEXT_PUBLIC_CHAT_API_URL: "http://localhost:8000"
+  NEXT_PUBLIC_OPENAI_DOMAIN_KEY: "placeholder"
+
+# Use the local build image tag
+image:
+  tag: "v1.0.2"
+
+# NodePort for browser access
+service:
+  type: NodePort
+  nodePort: 30080
+
+# Reduced resources for local testing
+resources:
+  limits:
+    cpu: 150m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Faster health checks
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 10
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+namespace: todo-dev

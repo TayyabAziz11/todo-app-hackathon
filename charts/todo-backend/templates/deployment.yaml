@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-backend.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "todo-backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "todo-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "todo-backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "todo-backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        env:
+        # Environment variables from ConfigMap
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-backend.fullname" . }}-config
+              key: FRONTEND_URL
+        {{- if .Values.configMap.CORS_ORIGINS }}
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-backend.fullname" . }}-config
+              key: CORS_ORIGINS
+        {{- end }}
+        {{- if .Values.oauthRedirectUris.google }}
+        - name: GOOGLE_REDIRECT_URI
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-backend.fullname" . }}-config
+              key: GOOGLE_REDIRECT_URI
+        {{- end }}
+        {{- if .Values.oauthRedirectUris.github }}
+        - name: GITHUB_REDIRECT_URI
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-backend.fullname" . }}-config
+              key: GITHUB_REDIRECT_URI
+        {{- end }}
+        # Environment variables from Secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.databaseUrl }}
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.secretKey }}
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.openaiApiKey }}
+        # OAuth Environment Variables (optional)
+        {{- if .Values.localSecrets.googleClientId }}
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.googleClientId }}
+              optional: true
+        {{- end }}
+        {{- if .Values.localSecrets.googleClientSecret }}
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.googleClientSecret }}
+              optional: true
+        {{- end }}
+        {{- if .Values.localSecrets.githubClientId }}
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.githubClientId }}
+              optional: true
+        {{- end }}
+        {{- if .Values.localSecrets.githubClientSecret }}
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecret }}
+              key: {{ .Values.secretKeys.githubClientSecret }}
+              optional: true
+        {{- end }}
+        {{- if .Values.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            {{- toYaml .Values.livenessProbe.httpGet | nindent 12 }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          successThreshold: {{ .Values.livenessProbe.successThreshold }}
+        {{- end }}
+        {{- if .Values.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            {{- toYaml .Values.readinessProbe.httpGet | nindent 12 }}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          successThreshold: {{ .Values.readinessProbe.successThreshold }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

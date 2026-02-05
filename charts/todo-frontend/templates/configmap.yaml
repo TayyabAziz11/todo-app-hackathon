@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-frontend.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "todo-frontend.labels" . | nindent 4 }}
+data:
+  # Note: These are Next.js build-time environment variables
+  # They are baked into the Docker image during build
+  # Changes here require rebuilding and redeploying the image
+  NEXT_PUBLIC_API_BASE_URL: {{ .Values.configMap.NEXT_PUBLIC_API_BASE_URL | quote }}
+  NEXT_PUBLIC_CHAT_API_URL: {{ .Values.configMap.NEXT_PUBLIC_CHAT_API_URL | quote }}
+  NEXT_PUBLIC_OPENAI_DOMAIN_KEY: {{ .Values.configMap.NEXT_PUBLIC_OPENAI_DOMAIN_KEY | quote }}

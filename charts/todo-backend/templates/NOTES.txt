@@ -1,0 +1,50 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }} -n {{ .Values.namespace }}
+  $ helm get all {{ .Release.Name }} -n {{ .Values.namespace }}
+
+The Todo Backend service has been deployed with the following configuration:
+
+1. Service Type: {{ .Values.service.type }}
+2. Service Port: {{ .Values.service.port }}
+3. Replicas: {{ .Values.replicaCount }}
+4. Namespace: {{ .Values.namespace }}
+
+To verify the deployment:
+
+  $ kubectl get pods -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "todo-backend.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+  $ kubectl get svc -n {{ .Values.namespace }} {{ include "todo-backend.fullname" . }}
+
+To check application logs:
+
+  $ kubectl logs -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "todo-backend.name" . }}" -f
+
+To test the health endpoint:
+
+  $ kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "todo-backend.fullname" . }} 8000:{{ .Values.service.port }}
+
+  Then visit: http://localhost:8000/health
+
+{{- if not .Values.autoscaling.enabled }}
+
+To scale the deployment:
+
+  $ kubectl scale deployment {{ include "todo-backend.fullname" . }} -n {{ .Values.namespace }} --replicas=<desired-count>
+{{- end }}
+
+IMPORTANT: Ensure the Secret '{{ .Values.existingSecret }}' exists in namespace '{{ .Values.namespace }}' with the following keys:
+  - DATABASE_URL
+  - SECRET_KEY
+  - OPENAI_API_KEY
+
+If the secret doesn't exist, create it using:
+
+  kubectl create secret generic {{ .Values.existingSecret }} \
+    --namespace={{ .Values.namespace }} \
+    --from-literal=DATABASE_URL='your-database-url' \
+    --from-literal=SECRET_KEY='your-secret-key' \
+    --from-literal=OPENAI_API_KEY='your-openai-api-key'

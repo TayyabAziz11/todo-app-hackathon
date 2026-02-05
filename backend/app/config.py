@@ -60,13 +60,20 @@ class Settings(BaseSettings):
 
         Railway PostgreSQL uses psycopg v3 by default, not psycopg2.
         This validator normalizes postgres:// URLs to postgresql+psycopg://.
+        Also accepts sqlite:// for local development.
         """
         if not v:
             logger.warning("DATABASE_URL not set - database operations will fail")
             return None
 
+        # Accept SQLite for local development
+        if v.startswith("sqlite://"):
+            logger.info("Using SQLite database for local development")
+            return v
+
+        # Validate PostgreSQL URLs
         if not v.startswith(("postgresql://", "postgresql+psycopg://", "postgresql+psycopg2://", "postgres://")):
-            logger.error("DATABASE_URL must be a PostgreSQL connection string")
+            logger.error("DATABASE_URL must be a PostgreSQL or SQLite connection string")
             return None
 
         # Normalize Railway's postgres:// to postgresql+psycopg:// (psycopg v3)

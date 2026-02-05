@@ -1,0 +1,13 @@
+apiVersion: v2
+name: todo-frontend
+description: A Helm chart for Todo Frontend Next.js application
+type: application
+version: 1.0.0
+appVersion: "v1.0.0"
+keywords:
+  - todo
+  - frontend
+  - nextjs
+  - react
+maintainers:
+  - name: Todo Team

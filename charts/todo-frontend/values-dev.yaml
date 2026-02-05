@@ -1,0 +1,28 @@
+# Minikube development environment overrides
+# Usage: helm install -f values.yaml -f values-dev.yaml
+
+# NodePort for browser access on Minikube
+service:
+  type: NodePort
+  nodePort: 30080
+
+# Reduced resource requirements for Minikube
+resources:
+  limits:
+    cpu: 150m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Faster health checks for development
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 10
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+# Development namespace
+namespace: todo-dev

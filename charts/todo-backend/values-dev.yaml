@@ -1,0 +1,60 @@
+# Minikube in-cluster development
+# Usage: helm install -f values.yaml -f values-dev.yaml
+#
+# This is for in-cluster development where pods communicate via service DNS.
+# Frontend pod talks to backend via http://todo-backend:8000 (ClusterIP)
+#
+# If you need LOCAL browser testing via port-forward, use values-local.yaml instead.
+
+# In-cluster service communication
+configMap:
+  FRONTEND_URL: "http://todo-frontend:3000"
+  CORS_ORIGINS: "http://todo-frontend:3000"
+
+# OAuth redirect URIs for dev cluster with ingress
+# IMPORTANT: Update these to match your actual ingress domain
+# Example: https://todo-dev.example.com or https://todo.your-company.dev
+# These must be configured in your OAuth provider settings:
+# - Google Cloud Console: https://console.cloud.google.com/
+# - GitHub OAuth Apps: https://github.com/settings/developers
+oauthRedirectUris:
+  google: "https://todo-dev.example.com/auth/google/callback"
+  github: "https://todo-dev.example.com/auth/github/callback"
+
+# ============================================
+# DEV CLUSTER OAUTH SECRETS
+# ============================================
+# For dev cluster, create a Kubernetes Secret manually with OAuth credentials:
+#
+# kubectl create secret generic todo-backend-secrets \
+#   --namespace=todo-dev \
+#   --from-literal=DATABASE_URL='postgresql://...' \
+#   --from-literal=SECRET_KEY='your-jwt-secret-key' \
+#   --from-literal=OPENAI_API_KEY='sk-...' \
+#   --from-literal=GOOGLE_CLIENT_ID='your-google-client-id.apps.googleusercontent.com' \
+#   --from-literal=GOOGLE_CLIENT_SECRET='your-google-client-secret' \
+#   --from-literal=GITHUB_CLIENT_ID='your-github-client-id' \
+#   --from-literal=GITHUB_CLIENT_SECRET='your-github-client-secret'
+#
+# Or use external secret managers (Sealed Secrets, External Secrets Operator, Vault)
+
+# Reduced resource requirements for Minikube
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Faster health checks for development
+livenessProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 10
+
+readinessProbe:
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+# Development namespace
+namespace: todo-dev

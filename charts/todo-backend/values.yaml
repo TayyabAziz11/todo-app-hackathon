@@ -1,0 +1,151 @@
+# Default values for todo-backend
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: todo-backend
+  pullPolicy: IfNotPresent
+  tag: "v1.0.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# Autoscaling configuration (disabled by default)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Health check configuration
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+# Environment variables from ConfigMap
+configMap:
+  FRONTEND_URL: "http://todo-frontend:3000"
+  # CORS_ORIGINS: Comma-separated list of allowed origins
+  # For in-cluster: use service DNS (http://todo-frontend:3000)
+  # For local: use localhost (http://localhost:3000)
+  CORS_ORIGINS: "http://todo-frontend:3000"
+
+# Environment variables from Secrets
+# The Secret 'todo-backend-secrets' must exist in the namespace
+# and contain the following keys:
+# - DATABASE_URL
+# - SECRET_KEY
+# - OPENAI_API_KEY
+# - GOOGLE_CLIENT_ID (optional - for Google OAuth)
+# - GOOGLE_CLIENT_SECRET (optional - for Google OAuth)
+# - GITHUB_CLIENT_ID (optional - for GitHub OAuth)
+# - GITHUB_CLIENT_SECRET (optional - for GitHub OAuth)
+existingSecret: "todo-backend-secrets"
+secretKeys:
+  databaseUrl: "DATABASE_URL"
+  secretKey: "SECRET_KEY"
+  openaiApiKey: "OPENAI_API_KEY"
+  googleClientId: "GOOGLE_CLIENT_ID"
+  googleClientSecret: "GOOGLE_CLIENT_SECRET"
+  githubClientId: "GITHUB_CLIENT_ID"
+  githubClientSecret: "GITHUB_CLIENT_SECRET"
+
+# OAuth redirect URIs (optional - can be set via ConfigMap)
+# If not set, backend will use FRONTEND_URL + /auth/{provider}/callback
+oauthRedirectUris:
+  google: ""  # Example: http://localhost:3000/auth/google/callback
+  github: ""  # Example: http://localhost:3000/auth/github/callback
+
+# Local development secret creation
+# Set to true in values-local.yaml to create a Secret with local dev values
+# NEVER set to true in production
+createLocalSecret: false
+localSecrets:
+  databaseUrl: ""
+  secretKey: ""
+  openaiApiKey: ""
+  # OAuth credentials (optional)
+  googleClientId: ""
+  googleClientSecret: ""
+  githubClientId: ""
+  githubClientSecret: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Namespace configuration
+namespace: todo-dev
+
+# Update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0

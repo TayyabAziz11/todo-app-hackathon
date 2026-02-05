@@ -1,0 +1,76 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }} -n {{ .Values.namespace }}
+  $ helm get all {{ .Release.Name }} -n {{ .Values.namespace }}
+
+The Todo Frontend service has been deployed with the following configuration:
+
+1. Service Type: {{ .Values.service.type }}
+2. Service Port: {{ .Values.service.port }}
+{{- if and (eq .Values.service.type "NodePort") .Values.service.nodePort }}
+3. NodePort: {{ .Values.service.nodePort }}
+{{- end }}
+4. Replicas: {{ .Values.replicaCount }}
+5. Namespace: {{ .Values.namespace }}
+
+To verify the deployment:
+
+  $ kubectl get pods -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "todo-frontend.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+  $ kubectl get svc -n {{ .Values.namespace }} {{ include "todo-frontend.fullname" . }}
+
+To check application logs:
+
+  $ kubectl logs -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "todo-frontend.name" . }}" -f
+
+{{- if eq .Values.service.type "NodePort" }}
+
+To access the application via NodePort on Minikube:
+
+  $ minikube service {{ include "todo-frontend.fullname" . }} -n {{ .Values.namespace }}
+
+Or get the Minikube IP and access directly:
+
+  $ export MINIKUBE_IP=$(minikube ip)
+  $ echo "Access the frontend at: http://$MINIKUBE_IP:{{ .Values.service.nodePort }}"
+
+{{- else if eq .Values.service.type "ClusterIP" }}
+
+To access the application via port-forward:
+
+  $ kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "todo-frontend.fullname" . }} 3000:{{ .Values.service.port }}
+
+  Then visit: http://localhost:3000
+
+{{- end }}
+
+{{- if not .Values.autoscaling.enabled }}
+
+To scale the deployment:
+
+  $ kubectl scale deployment {{ include "todo-frontend.fullname" . }} -n {{ .Values.namespace }} --replicas=<desired-count>
+{{- end }}
+
+IMPORTANT NOTES:
+
+1. Environment Variables:
+   The frontend uses build-time environment variables (NEXT_PUBLIC_*).
+   These are baked into the Docker image and cannot be changed at runtime.
+   To update these values:
+   - Rebuild the Docker image with new environment variables
+   - Update the image tag in values.yaml
+   - Upgrade the Helm release
+
+2. Backend Communication:
+   The frontend connects to the backend service at:
+   - API URL: {{ .Values.configMap.NEXT_PUBLIC_API_URL }}
+   - Chat API URL: {{ .Values.configMap.NEXT_PUBLIC_CHAT_API_URL }}
+
+   Ensure the backend service is deployed and accessible.
+
+3. Browser Access:
+   For Minikube, use NodePort ({{ .Values.service.nodePort }}) to access from your browser.
+   Run: minikube service {{ include "todo-frontend.fullname" . }} -n {{ .Values.namespace }}

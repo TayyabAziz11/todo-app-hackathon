@@ -1,0 +1,117 @@
+========================================
+🎉 Todo App Successfully Deployed!
+========================================
+
+Release Name: {{ .Release.Name }}
+Namespace: {{ .Values.global.namespace }}
+Chart Version: {{ .Chart.Version }}
+App Version: {{ .Chart.AppVersion }}
+
+Deployed Services:
+{{- if .Values.services.todoService.enabled }}
+  ✓ todo-service
+{{- end }}
+{{- if .Values.services.userService.enabled }}
+  ✓ user-service
+{{- end }}
+{{- if .Values.services.chatService.enabled }}
+  ✓ chat-service
+{{- end }}
+{{- if .Values.services.notificationService.enabled }}
+  ✓ notification-service
+{{- end }}
+{{- if .Values.services.auditService.enabled }}
+  ✓ audit-service
+{{- end }}
+{{- if .Values.services.analyticsService.enabled }}
+  ✓ analytics-service
+{{- end }}
+
+========================================
+📋 Next Steps
+========================================
+
+1. Check deployment status:
+
+   kubectl get pods -n {{ .Values.global.namespace }}
+   kubectl get svc -n {{ .Values.global.namespace }}
+
+2. Watch pods become ready:
+
+   kubectl get pods -n {{ .Values.global.namespace }} -w
+
+3. Check Dapr sidecar injection:
+
+   kubectl describe pod <pod-name> -n {{ .Values.global.namespace }}
+   # Look for daprd container
+
+4. View logs for any service:
+
+   kubectl logs -n {{ .Values.global.namespace }} -l app.kubernetes.io/name=todo-service -c todo-service
+   kubectl logs -n {{ .Values.global.namespace }} -l app.kubernetes.io/name=todo-service -c daprd
+
+5. Port-forward to access services locally (Minikube):
+
+   kubectl port-forward -n {{ .Values.global.namespace }} svc/todo-service 8000:8000
+   kubectl port-forward -n {{ .Values.global.namespace }} svc/user-service 8001:8000
+   kubectl port-forward -n {{ .Values.global.namespace }} svc/chat-service 8002:8000
+
+6. Check Dapr components:
+
+   kubectl get components -n {{ .Values.global.namespace }}
+   kubectl describe component statestore -n {{ .Values.global.namespace }}
+
+7. Test service health:
+
+   curl http://localhost:8000/health/ready
+   curl http://localhost:8000/health/live
+
+========================================
+🔧 Troubleshooting
+========================================
+
+If pods are not starting:
+
+1. Check events:
+   kubectl get events -n {{ .Values.global.namespace }} --sort-by='.lastTimestamp'
+
+2. Check pod details:
+   kubectl describe pod <pod-name> -n {{ .Values.global.namespace }}
+
+3. Check Dapr installation:
+   dapr status -k
+   kubectl get pods -n dapr-system
+
+4. Verify images are available:
+   docker images | grep -E "(todo|user|chat|notification|audit|analytics)-service"
+
+5. Check resource constraints:
+   kubectl top nodes
+   kubectl top pods -n {{ .Values.global.namespace }}
+
+========================================
+🚀 Upgrade or Uninstall
+========================================
+
+To upgrade the deployment:
+
+   helm upgrade {{ .Release.Name }} ./helm/todo-app -n {{ .Values.global.namespace }}
+
+To uninstall:
+
+   helm uninstall {{ .Release.Name }} -n {{ .Values.global.namespace }}
+
+To use Minikube-specific values:
+
+   helm upgrade {{ .Release.Name }} ./helm/todo-app -f helm/todo-app/values-minikube.yaml -n {{ .Values.global.namespace }}
+
+========================================
+📚 Documentation
+========================================
+
+For more information:
+- Helm documentation: https://helm.sh/docs/
+- Dapr documentation: https://docs.dapr.io/
+- Kubernetes documentation: https://kubernetes.io/docs/
+
+Happy deploying! 🎊

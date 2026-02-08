@@ -1,0 +1,14 @@
+apiVersion: v2
+name: todo-app
+description: Production-ready Todo App microservices with Dapr integration
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - todo
+  - microservices
+  - dapr
+  - fastapi
+maintainers:
+  - name: Todo App Team
+    email: team@todo-app.dev

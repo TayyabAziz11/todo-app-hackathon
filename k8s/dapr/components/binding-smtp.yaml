@@ -1,0 +1,46 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: smtp
+  namespace: todo-app-dev
+spec:
+  type: bindings.smtp
+  version: v1
+  metadata:
+  # SMTP Server Configuration
+  - name: host
+    value: "smtp.gmail.com"  # Replace with actual SMTP server for production
+  - name: port
+    value: "587"
+  - name: user
+    secretKeyRef:
+      name: smtp-credentials
+      key: username
+  - name: password
+    secretKeyRef:
+      name: smtp-credentials
+      key: password
+  - name: skipTLSVerify
+    value: "false"
+  - name: emailFrom
+    value: "noreply@todoapp.local"
+  - name: emailTo
+    value: ""  # Will be provided per-request
+  - name: emailCC
+    value: ""
+  - name: emailBCC
+    value: ""
+  - name: subject
+    value: ""  # Will be provided per-request
+---
+# Secret for SMTP credentials (development only)
+# In production, use external secret management (e.g., AWS Secrets Manager, Azure Key Vault)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: smtp-credentials
+  namespace: todo-app-dev
+type: Opaque
+stringData:
+  username: "dev@todoapp.local"
+  password: "dev-password-change-in-production"

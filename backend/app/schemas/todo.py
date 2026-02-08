@@ -8,8 +8,9 @@ These schemas define the request and response structures for:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+from app.models.todo import Priority
 
 
 class TodoCreate(BaseModel):
@@ -35,6 +36,24 @@ class TodoCreate(BaseModel):
         max_length=2000,
         description="Detailed description (optional, max 2000 characters)",
         examples=["Pick up milk, eggs, and bread from the store"]
+    )
+
+    priority: Optional[Priority] = Field(
+        default=None,
+        description="Priority level (LOW, MEDIUM, HIGH, URGENT)",
+        examples=[Priority.HIGH, Priority.MEDIUM]
+    )
+
+    tags: Optional[List[str]] = Field(
+        default=None,
+        description="List of tags for categorization",
+        examples=[["work", "urgent"], ["personal", "shopping"]]
+    )
+
+    due_date: Optional[datetime] = Field(
+        default=None,
+        description="When the todo is due (ISO 8601 format)",
+        examples=["2026-02-10T23:59:59Z"]
     )
 
     model_config = {
@@ -81,18 +100,39 @@ class TodoUpdate(BaseModel):
         examples=[True, False]
     )
 
+    priority: Optional[Priority] = Field(
+        default=None,
+        description="Priority level (optional)",
+        examples=[Priority.HIGH]
+    )
+
+    tags: Optional[List[str]] = Field(
+        default=None,
+        description="List of tags (optional)",
+        examples=[["work", "urgent"]]
+    )
+
+    due_date: Optional[datetime] = Field(
+        default=None,
+        description="Due date (optional, ISO 8601 format)",
+        examples=["2026-02-10T23:59:59Z"]
+    )
+
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "title": "Buy groceries and cook dinner",
-                    "completed": True
+                    "completed": True,
+                    "priority": "HIGH"
                 },
                 {
-                    "description": "Updated: Also pick up cleaning supplies"
+                    "description": "Updated: Also pick up cleaning supplies",
+                    "tags": ["shopping", "home"]
                 },
                 {
-                    "completed": False
+                    "completed": False,
+                    "due_date": "2026-02-10T23:59:59Z"
                 }
             ]
         }
@@ -140,6 +180,24 @@ class TodoResponse(BaseModel):
         ...,
         description="When the todo was last updated (ISO 8601 format)",
         examples=["2025-12-31T14:45:00Z"]
+    )
+
+    priority: Optional[Priority] = Field(
+        default=None,
+        description="Priority level (may be null)",
+        examples=[Priority.HIGH, None]
+    )
+
+    tags: Optional[List[str]] = Field(
+        default=None,
+        description="List of tags (may be null)",
+        examples=[["work", "urgent"], None]
+    )
+
+    due_date: Optional[datetime] = Field(
+        default=None,
+        description="When the todo is due (may be null)",
+        examples=["2026-02-10T23:59:59Z", None]
     )
 
     model_config = {

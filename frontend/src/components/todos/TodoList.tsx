@@ -13,11 +13,12 @@ import { SkeletonTodoList } from '@/components/ui/Skeleton';
 interface TodoListProps {
   todos: Todo[];
   isLoading: boolean;
-  onUpdate: (id: number, data: TodoUpdate) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onUpdate: (id: string, data: TodoUpdate) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onTagClick?: (tag: string) => void;
 }
 
-export default function TodoList({ todos, isLoading, onUpdate, onDelete }: TodoListProps) {
+export default function TodoList({ todos, isLoading, onUpdate, onDelete, onTagClick }: TodoListProps) {
   if (isLoading) {
     return <SkeletonTodoList count={4} />;
   }
@@ -70,6 +71,7 @@ export default function TodoList({ todos, isLoading, onUpdate, onDelete }: TodoL
                   todo={todo}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  onTagClick={onTagClick}
                 />
               </div>
             ))}
@@ -95,6 +97,7 @@ export default function TodoList({ todos, isLoading, onUpdate, onDelete }: TodoL
                   todo={todo}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  onTagClick={onTagClick}
                 />
               </div>
             ))}

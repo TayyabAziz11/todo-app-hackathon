@@ -1,0 +1,40 @@
+# Oracle Cloud Free Tier specific values
+# These override the default values.yaml
+
+namespace: todo-app
+
+backend:
+  image:
+    repository: docker.io/tayyabaziz11/todo-backend
+    tag: v5.0.0-oracle
+    pullPolicy: Always
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    # DATABASE_URL: Set via --set or secret (Neon PostgreSQL)
+    # JWT_SECRET_KEY: Set via --set or secret
+    JWT_ALGORITHM: "HS256"
+    JWT_EXPIRE_MINUTES: "60"
+    APP_ENV: "production"
+    LOG_LEVEL: "info"
+    # CORS_ORIGINS: Set after frontend LoadBalancer IP is known
+    # FRONTEND_URL: Set after frontend LoadBalancer IP is known
+    # OPENAI_API_KEY: Set via --set
+
+frontend:
+  image:
+    repository: docker.io/tayyabaziz11/todo-frontend
+    tag: v5.0.0-oracle
+    pullPolicy: Always
+  replicaCount: 1
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 3000
+  env:
+    # Public IP - NEXT_PUBLIC_* vars are baked into the browser bundle at build time
+    # Must use the LoadBalancer public IP so browsers can reach the API
+    NEXT_PUBLIC_API_BASE_URL: "http://129.151.136.242"
+    NEXT_PUBLIC_CHAT_API_URL: "http://129.151.136.242"

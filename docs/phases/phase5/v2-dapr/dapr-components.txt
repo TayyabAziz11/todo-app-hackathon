@@ -1,0 +1,4 @@
+NAME          AGE
+pubsub        112m
+secretstore   150m
+statestore    150m

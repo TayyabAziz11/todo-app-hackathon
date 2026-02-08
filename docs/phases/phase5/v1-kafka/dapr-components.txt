@@ -1,0 +1,3 @@
+NAME          AGE
+secretstore   19m
+statestore    19m

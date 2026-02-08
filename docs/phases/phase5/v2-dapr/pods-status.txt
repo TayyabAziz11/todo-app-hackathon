@@ -1,0 +1,11 @@
+NAME                                          READY   STATUS    RESTARTS      AGE
+analytics-service-58f499699f-7vb8q            2/2     Running   0             137m
+audit-service-79bb476f7b-q7r4l                2/2     Running   0             20m
+chat-service-5dd9887747-2ddnw                 2/2     Running   0             137m
+notification-service-7b6d8f8f98-xwr7q         2/2     Running   0             137m
+postgresql-0                                  1/1     Running   0             40s
+strimzi-cluster-operator-56677ffff6-x9kw8     1/1     Running   1 (50m ago)   3h31m
+todo-kafka-entity-operator-6b566d6947-prxx2   2/2     Running   0             3h7m
+todo-kafka-kafka-pool-0                       1/1     Running   0             3h9m
+todo-service-5776d6d8c5-w9kr5                 2/2     Running   0             26m
+user-service-7fb6857794-4tgjf                 2/2     Running   0             137m

@@ -1,0 +1,226 @@
+{
+  "cloudEvents_v1.0_compliant": true,
+  "specification": "https://cloudevents.io/",
+  "samples": [
+    {
+      "event_type": "todo.created",
+      "description": "Event published when a new TODO is created",
+      "structure": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "76c31e9b-8d07-4e22-8fa4-5b0516b27f9d",
+        "time": "2026-02-06T12:30:28.795194Z",
+        "datacontenttype": "application/json",
+        "data": {
+          "id": "3480c143-2d7c-441c-ad41-b356451c3a09",
+          "title": "Test Priority Feature",
+          "description": "Testing F3",
+          "priority": "HIGH",
+          "completed": false,
+          "tags": [],
+          "created_at": "2026-02-06T12:30:27.794645Z",
+          "updated_at": "2026-02-06T12:30:27.794645Z",
+          "user_id": "default-user"
+        }
+      },
+      "validation": {
+        "required_attributes": ["specversion", "type", "source", "id"],
+        "optional_attributes": ["time", "datacontenttype", "data"],
+        "compliance_status": "PASS"
+      }
+    },
+    {
+      "event_type": "todo.created_with_tags",
+      "description": "Event with tags array (F4 feature)",
+      "structure": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "f99f49d0-c1da-4892-b1aa-8a5f6ec9bd7d",
+        "time": "2026-02-06T12:39:38.924586Z",
+        "datacontenttype": "application/json",
+        "data": {
+          "id": "f99f49d0-c1da-4892-b1aa-8a5f6ec9bd7d",
+          "title": "Implement Frontend",
+          "description": "Build React UI",
+          "priority": "URGENT",
+          "completed": false,
+          "tags": ["frontend", "react", "ui"],
+          "created_at": "2026-02-06T12:39:38.924586Z",
+          "updated_at": "2026-02-06T12:39:38.924586Z",
+          "user_id": "default-user"
+        }
+      },
+      "notes": [
+        "Tags normalized to lowercase",
+        "Tags sorted alphabetically",
+        "Many-to-many relationship"
+      ]
+    },
+    {
+      "event_type": "todo.created_load_test",
+      "description": "Event from load testing (50 TODOs)",
+      "structure": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "c36fd8cd-0ed4-4424-8dfd-cf6924ccdc42",
+        "time": "2026-02-06T12:59:44.052177Z",
+        "datacontenttype": "application/json",
+        "data": {
+          "id": "c36fd8cd-0ed4-4424-8dfd-cf6924ccdc42",
+          "title": "Low Priority Task",
+          "description": null,
+          "priority": "LOW",
+          "completed": false,
+          "tags": [],
+          "created_at": "2026-02-06T12:59:44.052177Z",
+          "updated_at": "2026-02-06T12:59:44.052177Z",
+          "user_id": "default-user"
+        }
+      },
+      "load_test_context": {
+        "total_events": 50,
+        "duration_seconds": 20,
+        "throughput": "2.5 TODOs/sec",
+        "status": "SUCCESS"
+      }
+    },
+    {
+      "event_type": "todo.created_recovery_test",
+      "description": "Event after State Store recovery (T055)",
+      "structure": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "c82c8326-01f3-41e5-bb8b-25dfe5a1a8ca",
+        "time": "2026-02-06T13:04:48.392026Z",
+        "datacontenttype": "application/json",
+        "data": {
+          "id": "c82c8326-01f3-41e5-bb8b-25dfe5a1a8ca",
+          "title": "Recovery Test",
+          "description": null,
+          "priority": "HIGH",
+          "completed": false,
+          "tags": [],
+          "created_at": "2026-02-06T13:04:48.392026Z",
+          "updated_at": "2026-02-06T13:04:48.392026Z",
+          "user_id": "default-user"
+        }
+      },
+      "failure_recovery_context": {
+        "test": "State Store outage simulation",
+        "recovery_time": "~30 seconds",
+        "data_integrity": "VERIFIED",
+        "status": "SUCCESS"
+      }
+    }
+  ],
+  "dapr_envelope": {
+    "description": "Dapr wraps CloudEvents in additional metadata",
+    "example": {
+      "data": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "76c31e9b-8d07-4e22-8fa4-5b0516b27f9d",
+        "time": "2026-02-06T12:30:28.795194Z",
+        "datacontenttype": "application/json",
+        "data": {
+          "id": "3480c143-2d7c-441c-ad41-b356451c3a09",
+          "title": "Test Priority Feature"
+        }
+      },
+      "datacontenttype": "application/json",
+      "id": "c077b908-40df-4d91-8985-224c16aadd6c",
+      "pubsubname": "pubsub",
+      "source": "todo-service",
+      "specversion": "1.0",
+      "time": "2026-02-06T12:30:28Z",
+      "topic": "todo.created",
+      "traceid": "",
+      "traceparent": "",
+      "tracestate": "",
+      "type": "com.dapr.event.sent"
+    },
+    "notes": [
+      "Dapr adds outer envelope for delivery metadata",
+      "Inner 'data' contains the original CloudEvent",
+      "Trace fields support distributed tracing (empty in MVP)"
+    ]
+  },
+  "audit_log_entries": {
+    "description": "Immutable audit log records stored in State Store",
+    "example": {
+      "audit_id": "dbad015b-bba1-4d1c-a8da-dcf732fac7a9",
+      "event_id": "3ffcd0e1-4c88-4efb-8b0f-e2dad5facb4b",
+      "event_type": "com.dapr.event.sent",
+      "event_source": "todo-service",
+      "event_time": "2026-02-06T12:30:28Z",
+      "event_data": {
+        "specversion": "1.0",
+        "type": "com.todoapp.todo.created",
+        "source": "todo-service",
+        "id": "76c31e9b-8d07-4e22-8fa4-5b0516b27f9d",
+        "data": {
+          "id": "3480c143-2d7c-441c-ad41-b356451c3a09",
+          "title": "Test Priority Feature"
+        }
+      },
+      "recorded_at": "2026-02-06T12:30:29.123456Z"
+    },
+    "storage": {
+      "backend": "Dapr State Store (PostgreSQL)",
+      "key_format": "audit:{uuid}",
+      "operations_allowed": ["CREATE", "READ"],
+      "operations_forbidden": ["UPDATE", "DELETE"],
+      "immutability": "ENFORCED"
+    }
+  },
+  "idempotency": {
+    "mechanism": "Event ID tracking",
+    "window": "7 days (MVP: in-memory, Production: State Store)",
+    "statistics": {
+      "unique_events": 5,
+      "duplicate_events": 39,
+      "rejection_rate": "88.6%",
+      "status": "OPERATIONAL"
+    },
+    "log_example": {
+      "new_event": "INFO:main:Audit log created: dbad015b-bba1-4d1c-a8da-dcf732fac7a9 for event 3ffcd0e1-4c88-4efb-8b0f-e2dad5facb4b",
+      "duplicate_event": "INFO:main:Event 096a0887-76f1-440c-995d-fb53a8db26ff already processed (idempotent)"
+    }
+  },
+  "kafka_topics": {
+    "todo.created": {
+      "partitions": 3,
+      "replication_factor": 1,
+      "events_published": "50+",
+      "status": "OPERATIONAL"
+    },
+    "todo.updated": {
+      "partitions": 3,
+      "replication_factor": 1,
+      "events_published": "5+",
+      "status": "OPERATIONAL"
+    },
+    "todo.completed": {
+      "partitions": 3,
+      "replication_factor": 1,
+      "events_published": "0",
+      "status": "READY"
+    },
+    "todo.deleted": {
+      "partitions": 3,
+      "replication_factor": 1,
+      "events_published": "0",
+      "status": "READY"
+    }
+  },
+  "validation_tools": {
+    "consumer_command": "kubectl exec todo-kafka-kafka-pool-0 -n todo-app-dev -- bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic todo.created --from-beginning",
+    "schema_validation": "jsonschema (Python library)",
+    "cloudevents_spec": "https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md"
+  }
+}

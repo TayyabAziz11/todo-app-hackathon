@@ -1,19 +1,10 @@
 'use client';
 
 /**
- * Enhanced Professional Dashboard Page
- *
- * Premium todo management dashboard with:
- * - Animated statistics and metrics
- * - Advanced search, filter, and sort
- * - Grid/List view toggle
- * - Enhanced task creation
- * - Premium task cards with animations
- * - Responsive design
- * - Smooth interactions
+ * Dashboard Page
  */
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
@@ -165,14 +156,12 @@ export default function EnhancedDashboardPage() {
   const processedTodos = useMemo(() => {
     let result = [...todos];
 
-    // Apply filter
     if (filter === 'active') {
       result = result.filter((todo) => !todo.completed);
     } else if (filter === 'completed') {
       result = result.filter((todo) => todo.completed);
     }
 
-    // Apply search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -182,7 +171,6 @@ export default function EnhancedDashboardPage() {
       );
     }
 
-    // Apply sort
     result.sort((a, b) => {
       switch (sortBy) {
         case 'date-desc':
@@ -208,7 +196,6 @@ export default function EnhancedDashboardPage() {
     const active = total - completed;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Calculate today's tasks
     const today = new Date().toDateString();
     const createdToday = todos.filter(t =>
       new Date(t.created_at).toDateString() === today
@@ -233,7 +220,7 @@ export default function EnhancedDashboardPage() {
     }
   };
 
-  const handleUpdateTodo = async (id: number, data: TodoUpdate): Promise<void> => {
+  const handleUpdateTodo = async (id: string, data: TodoUpdate): Promise<void> => {
     if (!user) return;
 
     try {
@@ -253,7 +240,7 @@ export default function EnhancedDashboardPage() {
     }
   };
 
-  const handleDeleteTodo = async (id: number): Promise<void> => {
+  const handleDeleteTodo = async (id: string): Promise<void> => {
     if (!user) return;
 
     try {
@@ -271,7 +258,6 @@ export default function EnhancedDashboardPage() {
     logout();
   };
 
-  // Clear search
   const clearSearch = () => {
     setSearchQuery('');
   };
@@ -292,7 +278,6 @@ export default function EnhancedDashboardPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
-  // Show loading state
   if (authLoading || !user) {
     return <SkeletonDashboard />;
   }
@@ -332,11 +317,10 @@ export default function EnhancedDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Premium Header */}
+      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-lg bg-white/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-all">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,9 +335,7 @@ export default function EnhancedDashboardPage() {
               </div>
             </Link>
 
-            {/* Right section */}
             <div className="flex items-center gap-4">
-              {/* Quick add button */}
               <button
                 onClick={() => setShowQuickAdd(true)}
                 className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all"
@@ -365,7 +347,6 @@ export default function EnhancedDashboardPage() {
                 <kbd className="hidden lg:inline-block px-2 py-0.5 text-xs bg-white/20 rounded">⌘N</kbd>
               </button>
 
-              {/* User Profile */}
               <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
@@ -389,7 +370,6 @@ export default function EnhancedDashboardPage() {
                   </svg>
                 </button>
 
-                {/* Dropdown Menu */}
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 animate-fade-in-down">
                     <div className="px-4 py-3 border-b border-gray-100">
@@ -427,7 +407,7 @@ export default function EnhancedDashboardPage() {
           </p>
         </div>
 
-        {/* Enhanced Stats Grid */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in-up stagger-1">
           <StatCard
             icon={
@@ -556,16 +536,13 @@ export default function EnhancedDashboardPage() {
           {/* Header with Controls */}
           <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              {/* Left: Title and Stats */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Tasks</h2>
                 <p className="text-sm text-gray-600">
-                  {processedTodos.length} {filter === 'all' ? '' : filter} task{processedTodos.length !== 1 ? 's' : ''}
-                  {searchQuery && ` matching "${searchQuery}"`}
+                  {processedTodos.length} {filter === 'all' ? '' : filter} task{processedTodos.length !== 1 ? 's' : ''}{searchQuery ? ` matching "${searchQuery}"` : ''}
                 </p>
               </div>
 
-              {/* Right: Controls */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Search */}
                 <div className="relative flex-1 sm:flex-initial">

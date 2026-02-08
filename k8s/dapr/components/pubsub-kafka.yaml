@@ -1,0 +1,24 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: todo-app-dev
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "todo-kafka-kafka-bootstrap.todo-app-dev.svc.cluster.local:9092"
+  - name: authType
+    value: "none"
+  - name: consumerGroup
+    value: "todo-app"
+  - name: clientId
+    value: "todo-app-pubsub"
+  - name: maxMessageBytes
+    value: "1024000"
+  - name: version
+    value: "4.0.1"
+  # DLQ Configuration (T073)
+  - name: deadLetterTopic
+    value: "notifications.dlq"

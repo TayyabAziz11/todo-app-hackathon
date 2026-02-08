@@ -10,14 +10,18 @@
 import { useState } from 'react';
 import { Todo, TodoUpdate } from '@/types/todo';
 import Confetti, { useConfetti } from '@/components/ui/Confetti';
+import { PriorityBadge } from '@/components/ui/PriorityBadge';
+import { TagChip } from '@/components/ui/TagChip';
+import { DueDateBadge } from '@/components/ui/DueDateBadge';
 
 interface TodoItemProps {
   todo: Todo;
-  onUpdate: (id: number, data: TodoUpdate) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onUpdate: (id: string, data: TodoUpdate) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onTagClick?: (tag: string) => void;
 }
 
-export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
+export default function TodoItem({ todo, onUpdate, onDelete, onTagClick }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDescription, setEditDescription] = useState(todo.description || '');
@@ -237,6 +241,33 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
               {todo.description}
             </p>
           )}
+
+          {/* Phase V.4 Metadata: Priority, Tags, Due Date */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {/* Priority Badge */}
+            {todo.priority && <PriorityBadge priority={todo.priority} size="sm" />}
+
+            {/* Tags */}
+            {todo.tags && todo.tags.length > 0 && (
+              <>
+                {todo.tags.map((tag) => (
+                  <TagChip
+                    key={tag}
+                    tag={tag}
+                    size="sm"
+                    onClick={onTagClick}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Due Date */}
+            {todo.due_date && (
+              <DueDateBadge dueDate={todo.due_date} completed={todo.completed} size="sm" />
+            )}
+          </div>
+
+          {/* Created/Updated Timestamps */}
           <div className="flex items-center gap-3 mt-2">
             <span className="text-xs text-gray-400 flex items-center gap-1">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,0 +1,8 @@
+⚠  In future releases, this command will only query the "default" namespace by default. Please use the --namespace flag for a specific namespace, or the --all-namespaces (-A) flag for all namespaces.
+NAMESPACE     APP ID                APP PORT  AGE  CREATED              
+todo-app-dev  analytics-service     8000      6m   2026-02-06 15:47.24  
+todo-app-dev  audit-service         8000      6m   2026-02-06 15:47.24  
+todo-app-dev  chat-service          8000      6m   2026-02-06 15:47.24  
+todo-app-dev  notification-service  8000      6m   2026-02-06 15:47.24  
+todo-app-dev  todo-service          8000      2m   2026-02-06 15:51.15  
+todo-app-dev  user-service          8000      6m   2026-02-06 15:47.24  

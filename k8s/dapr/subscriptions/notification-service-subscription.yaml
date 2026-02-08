@@ -1,0 +1,54 @@
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: notification-service-subscription
+  namespace: todo-app-dev
+spec:
+  # The pubsub component to use (Kafka)
+  pubsubname: pubsub
+
+  # Topics to subscribe to
+  topic: todo.reminder.due
+
+  # Routes define which endpoint receives events
+  routes:
+    default: /events/reminder-due
+
+  # T073: Retry policy with exponential backoff
+  deadLetterTopic: notifications.dlq
+  bulkSubscribe:
+    enabled: false
+
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: notification-service-todo-completed
+  namespace: todo-app-dev
+spec:
+  pubsubname: pubsub
+  topic: todo.completed
+  routes:
+    default: /events/todo-completed
+
+  # T073: Retry policy
+  deadLetterTopic: notifications.dlq
+  bulkSubscribe:
+    enabled: false
+
+---
+apiVersion: dapr.io/v2alpha1
+kind: Subscription
+metadata:
+  name: notification-service-todo-deleted
+  namespace: todo-app-dev
+spec:
+  pubsubname: pubsub
+  topic: todo.deleted
+  routes:
+    default: /events/todo-deleted
+
+  # T073: Retry policy
+  deadLetterTopic: notifications.dlq
+  bulkSubscribe:
+    enabled: false

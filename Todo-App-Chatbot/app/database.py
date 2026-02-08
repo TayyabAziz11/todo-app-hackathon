@@ -34,6 +34,7 @@ def get_engine() -> Engine:
             max_overflow=10,
             pool_pre_ping=True,
             echo=False,
+            connect_args={"connect_timeout": 10},
         )
         logger.info("Database engine created successfully")
     return _engine

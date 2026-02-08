@@ -4,8 +4,8 @@ uvicorn[standard]==0.32.0
 
 # Database (SQLModel + PostgreSQL driver)
 sqlmodel==0.0.22
-sqlalchemy>=2.0.0
-psycopg[binary]>=3.1
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
 
 # Authentication
 python-jose[cryptography]==3.3.0
@@ -27,5 +27,5 @@ httpx==0.27.0
 python-multipart==0.0.20
 
 # AI Agents and MCP Protocol (Phase 3)
-openai>=1.30.0  # OpenAI Agents SDK (includes agent runner)
-mcp>=1.0.0  # Official MCP SDK for tool registration
+openai==1.59.6
+mcp==1.2.0

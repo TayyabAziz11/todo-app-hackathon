@@ -69,14 +69,16 @@ class Settings(BaseSettings):
             logger.error("DATABASE_URL must be a PostgreSQL connection string")
             return None
 
-        # Normalize Railway's postgres:// to postgresql+psycopg:// (psycopg v3)
+        # Normalize to postgresql+psycopg2:// (psycopg2-binary driver)
         if v.startswith("postgres://"):
-            v = v.replace("postgres://", "postgresql+psycopg://", 1)
-            logger.info("Normalized postgres:// to postgresql+psycopg:// for Railway compatibility")
-        # Also normalize postgresql:// to postgresql+psycopg://
-        elif v.startswith("postgresql://") and "+psycopg" not in v:
-            v = v.replace("postgresql://", "postgresql+psycopg://", 1)
-            logger.info("Normalized postgresql:// to postgresql+psycopg:// for Railway compatibility")
+            v = v.replace("postgres://", "postgresql+psycopg2://", 1)
+            logger.info("Normalized postgres:// to postgresql+psycopg2://")
+        elif v.startswith("postgresql://") and "+" not in v:
+            v = v.replace("postgresql://", "postgresql+psycopg2://", 1)
+            logger.info("Normalized postgresql:// to postgresql+psycopg2://")
+        elif "+psycopg://" in v:
+            v = v.replace("+psycopg://", "+psycopg2://", 1)
+            logger.info("Updated psycopg v3 URL to psycopg2")
 
         return v
 

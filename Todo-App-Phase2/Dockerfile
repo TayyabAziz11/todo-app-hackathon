@@ -1,28 +1,19 @@
-# Stage 1: Install dependencies with build tools
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim
 
 WORKDIR /app
 
+# Build deps needed for psycopg2-binary and any compiled wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install dependencies first (cached layer)
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt --target /app/packages
+    pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Minimal runtime image
-FROM python:3.11-slim
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy installed packages and app code
-COPY --from=builder /app/packages /usr/local/lib/python3.11/site-packages
+# Copy application code
 COPY . .
 
 ENV PYTHONUNBUFFERED=1 \

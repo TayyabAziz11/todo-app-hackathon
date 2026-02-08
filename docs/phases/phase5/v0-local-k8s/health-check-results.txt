@@ -1,0 +1,26 @@
+=========================================
+Phase V.0 Infrastructure Health Check
+=========================================
+
+🔍 Checking Minikube status... [0;32m✓ HEALTHY[0m
+🔍 Checking kubectl connectivity... [0;32m✓ HEALTHY[0m
+🔍 Checking Dapr control plane... [0;32m✓ HEALTHY (8 pods running)[0m
+🔍 Checking PostgreSQL... [0;32m✓ HEALTHY[0m
+🔍 Checking Kafka cluster... [0;32m✓ HEALTHY[0m
+🔍 Checking Kafka broker pod... [0;32m✓ HEALTHY[0m
+🔍 Checking todo-app-dev namespace... [0;32m✓ HEALTHY[0m
+🔍 Checking Kubernetes secrets... [0;32m✓ HEALTHY (3/3 secrets present)[0m
+
+=========================================
+[0;32m✅ ALL INFRASTRUCTURE CHECKS PASSED[0m
+=========================================
+
+Summary:
+  ✓ Minikube cluster: Running
+  ✓ Dapr control plane: 8 pods
+  ✓ PostgreSQL: Ready
+  ✓ Kafka: Ready
+  ✓ Namespace: Active
+  ✓ Secrets: 3/3 configured
+
+Phase V.0 infrastructure is ready for service deployment.

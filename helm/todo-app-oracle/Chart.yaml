@@ -1,0 +1,6 @@
+apiVersion: v2
+name: todo-app-oracle
+description: Todo App - FastAPI backend + Next.js frontend for Oracle Cloud Free Tier (OKE)
+type: application
+version: 5.0.0
+appVersion: "5.0.0-oracle"

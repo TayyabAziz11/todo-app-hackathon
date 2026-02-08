@@ -23,11 +23,47 @@ export default function HomePage() {
     {
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
         </svg>
       ),
-      title: 'Task Management',
-      description: 'Create, organize, and track your tasks with ease. Mark them complete when done.',
+      title: 'Priority-Based Management',
+      description: 'Assign priorities (LOW, MEDIUM, HIGH, URGENT) to tasks with color-coded badges for instant visual clarity.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+      title: 'Tag Organization',
+      description: 'Organize tasks with tags. Click any tag to instantly filter your task list and find what you need.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+      title: 'Advanced Search',
+      description: 'Powerful search with fuzzy matching, tag autocomplete, and 13+ filters to find tasks in milliseconds.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      title: 'Smart Due Dates',
+      description: 'Set due dates with intelligent status tracking. Visual alerts for overdue and upcoming deadlines.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+      title: 'Email Reminders',
+      description: 'Receive timely email notifications for upcoming and overdue tasks. Stay on top of your deadlines.',
     },
     {
       icon: (
@@ -36,7 +72,7 @@ export default function HomePage() {
         </svg>
       ),
       title: 'Secure & Private',
-      description: 'Your data is protected with industry-standard encryption. Your tasks, your privacy.',
+      description: 'Your data is protected with industry-standard encryption and secure authentication.',
     },
     {
       icon: (
@@ -45,34 +81,7 @@ export default function HomePage() {
         </svg>
       ),
       title: 'Lightning Fast',
-      description: 'Built with modern technology for instant response times and smooth experience.',
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-      ),
-      title: 'Works Everywhere',
-      description: 'Access your tasks from any device. Responsive design for desktop, tablet, and mobile.',
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-        </svg>
-      ),
-      title: 'Beautiful Design',
-      description: 'Modern, clean interface that makes task management a pleasure, not a chore.',
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      title: 'Track Progress',
-      description: 'See your completed tasks and celebrate your productivity wins.',
+      description: 'Built with modern technology. Sub-5ms search queries and instant UI updates.',
     },
   ];
 
@@ -96,11 +105,11 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in-down">
+            <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in-down">
               <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              AI Chatbot Assistant is Live!
+              Advanced Search & Filtering Now Live!
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 animate-fade-in-up">
@@ -109,8 +118,8 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto animate-fade-in-up stagger-1">
-              Manage your tasks using natural language with our AI-powered chatbot assistant.
-              Create, update, and complete tasks just by talking. Simple, intelligent, and powerful.
+              Smart task management with priorities, tags, advanced search, and AI assistance.
+              Find tasks instantly, track deadlines, and stay organized effortlessly.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up stagger-2">
@@ -171,24 +180,92 @@ export default function HomePage() {
                   <div className="w-3 h-3 rounded-full bg-green-400" />
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
-                    <div className="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                  {/* Completed task with priority and tags */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-700 font-medium line-through flex-1">Complete project proposal</span>
                     </div>
-                    <span className="text-gray-700 font-medium line-through">Complete project proposal</span>
-                    <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Completed</span>
+                    <div className="flex flex-wrap items-center gap-2 ml-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                        High
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        proposal
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        work
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
-                    <span className="text-gray-700 font-medium">Review design mockups</span>
-                    <span className="ml-auto text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">In Progress</span>
+
+                  {/* Urgent task with due date */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium flex-1">Fix critical bug in production</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 ml-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 border border-red-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Urgent
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        bug
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-red-700 bg-red-50 border border-red-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Due today
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
-                    <span className="text-gray-700 font-medium">Schedule team meeting</span>
-                    <span className="ml-auto text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Pending</span>
+
+                  {/* Low priority task */}
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium flex-1">Update documentation</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 ml-10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-700 border border-gray-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                        Low
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 border border-purple-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                        docs
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-gray-600 bg-gray-50 border border-gray-200 rounded-full text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Due Feb 15
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

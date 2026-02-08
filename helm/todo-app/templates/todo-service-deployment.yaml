@@ -1,0 +1,77 @@
+{{- if .Values.services.todoService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.todoService.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-app.serviceLabels" (dict "serviceName" .Values.services.todoService.name "root" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.global.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo-app.serviceSelectorLabels" (dict "serviceName" .Values.services.todoService.name "Release" .Release) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "todo-app.daprAnnotations" (dict "serviceName" .Values.services.todoService.name "appPort" .Values.services.todoService.appPort "root" .) | nindent 8 }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "todo-app.serviceSelectorLabels" (dict "serviceName" .Values.services.todoService.name "Release" .Release) | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      securityContext:
+        {{- include "todo-app.securityContext" . | nindent 8 }}
+      containers:
+      - name: {{ .Values.services.todoService.name }}
+        image: "{{ .Values.services.todoService.image.repository }}:{{ .Values.services.todoService.image.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.services.todoService.appPort }}
+          protocol: TCP
+        env:
+        {{- if .Values.services.todoService.env }}
+        {{- toYaml .Values.services.todoService.env | nindent 8 }}
+        {{- end }}
+        - name: PORT
+          value: {{ .Values.services.todoService.appPort | quote }}
+        - name: SERVICE_NAME
+          value: {{ .Values.services.todoService.name }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.healthProbes.liveness.path }}
+            port: http
+          initialDelaySeconds: {{ .Values.healthProbes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthProbes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthProbes.liveness.timeoutSeconds }}
+          successThreshold: {{ .Values.healthProbes.liveness.successThreshold }}
+          failureThreshold: {{ .Values.healthProbes.liveness.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.healthProbes.readiness.path }}
+            port: http
+          initialDelaySeconds: {{ .Values.healthProbes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthProbes.readiness.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthProbes.readiness.timeoutSeconds }}
+          successThreshold: {{ .Values.healthProbes.readiness.successThreshold }}
+          failureThreshold: {{ .Values.healthProbes.readiness.failureThreshold }}
+        resources:
+          {{- include "todo-app.resources" . | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -161,3 +161,9 @@ minikube-linux-amd64
 
 # Temporary port files
 8000
+
+# Python venv (already covered by venv/ above but explicit)
+venv/
+
+# package-lock at root (frontend has its own)
+/package-lock.json

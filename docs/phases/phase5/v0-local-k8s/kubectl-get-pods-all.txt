@@ -1,0 +1,24 @@
+NAMESPACE       NAME                                          READY   STATUS      RESTARTS       AGE
+dapr-system     dapr-dashboard-c65d9b6d4-8cbpx                1/1     Running     0              173m
+dapr-system     dapr-operator-56ddbf694-tzpsf                 1/1     Running     0              174m
+dapr-system     dapr-placement-server-0                       1/1     Running     0              174m
+dapr-system     dapr-scheduler-server-0                       1/1     Running     0              174m
+dapr-system     dapr-scheduler-server-1                       1/1     Running     0              174m
+dapr-system     dapr-scheduler-server-2                       1/1     Running     0              174m
+dapr-system     dapr-sentry-7964f469f8-9cvjl                  1/1     Running     0              174m
+dapr-system     dapr-sidecar-injector-bb7b8f577-r2q25         1/1     Running     1 (174m ago)   174m
+ingress-nginx   ingress-nginx-admission-create-v75t5          0/1     Completed   0              177m
+ingress-nginx   ingress-nginx-admission-patch-qwt6x           0/1     Completed   1              177m
+ingress-nginx   ingress-nginx-controller-8675c6b56f-dk4rf     1/1     Running     0              177m
+kube-system     coredns-7d764666f9-l466s                      1/1     Running     0              178m
+kube-system     etcd-minikube                                 1/1     Running     0              178m
+kube-system     kube-apiserver-minikube                       1/1     Running     0              178m
+kube-system     kube-controller-manager-minikube              1/1     Running     0              178m
+kube-system     kube-proxy-bqrmq                              1/1     Running     0              178m
+kube-system     kube-scheduler-minikube                       1/1     Running     0              178m
+kube-system     metrics-server-5778bb4788-wrlpz               1/1     Running     0              175m
+kube-system     storage-provisioner                           1/1     Running     1 (177m ago)   178m
+todo-app-dev    postgresql-0                                  1/1     Running     0              171m
+todo-app-dev    strimzi-cluster-operator-56677ffff6-x9kw8     1/1     Running     0              47m
+todo-app-dev    todo-kafka-entity-operator-6b566d6947-prxx2   2/2     Running     0              22m
+todo-app-dev    todo-kafka-kafka-pool-0                       1/1     Running     0              25m

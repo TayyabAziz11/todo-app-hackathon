@@ -1,0 +1,18 @@
+{{- if .Values.services.userService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.userService.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "todo-app.serviceLabels" (dict "serviceName" .Values.services.userService.name "root" .) | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "todo-app.serviceSelectorLabels" (dict "serviceName" .Values.services.userService.name "Release" .Release) | nindent 4 }}
+{{- end }}

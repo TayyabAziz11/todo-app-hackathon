@@ -1,0 +1,126 @@
+# Default values for todo-app
+# This file contains default configuration for all environments
+
+# Global settings
+global:
+  namespace: todo-app-dev
+  imagePullPolicy: IfNotPresent
+  replicaCount: 1
+
+# Dapr configuration
+dapr:
+  enabled: true
+  logLevel: info
+
+# Common service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+# Resource limits (Oracle Free Tier compatible)
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+# Health probes configuration
+healthProbes:
+  readiness:
+    path: /health/ready
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  liveness:
+    path: /health/live
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+# Service-specific configurations
+services:
+  todoService:
+    enabled: true
+    name: todo-service
+    image:
+      repository: todo-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+  userService:
+    enabled: true
+    name: user-service
+    image:
+      repository: user-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+  chatService:
+    enabled: true
+    name: chat-service
+    image:
+      repository: chat-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+  notificationService:
+    enabled: true
+    name: notification-service
+    image:
+      repository: notification-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+  auditService:
+    enabled: true
+    name: audit-service
+    image:
+      repository: audit-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+  analyticsService:
+    enabled: true
+    name: analytics-service
+    image:
+      repository: analytics-service
+      tag: dev
+    appPort: 8000
+    env: []
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# Pod annotations (common to all services)
+podAnnotations: {}
+
+# Pod labels (common to all services)
+podLabels: {}
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity: {}

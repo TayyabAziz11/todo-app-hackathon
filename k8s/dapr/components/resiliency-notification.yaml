@@ -1,0 +1,22 @@
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: notification-resiliency
+  namespace: todo-app-dev
+spec:
+  policies:
+    # T073: Retry policy with exponential backoff
+    retries:
+      notificationRetry:
+        policy: exponential
+        maxRetries: 3
+
+    # Timeout policy
+    timeouts:
+      notificationTimeout: 30s
+
+  targets:
+    apps:
+      notification-service:
+        retry: notificationRetry
+        timeout: notificationTimeout

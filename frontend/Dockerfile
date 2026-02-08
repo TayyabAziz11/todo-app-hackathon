@@ -36,16 +36,16 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy application source code
 COPY . .
 
-# Build arguments for Next.js public environment variables
-# These are baked into the build at compile time
-# IMPORTANT: Use NEXT_PUBLIC_API_BASE_URL (not NEXT_PUBLIC_API_URL)
-# For port-forward testing: http://localhost:8000
-# For in-cluster pod-to-pod: http://todo-backend:8000
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-ARG NEXT_PUBLIC_CHAT_API_URL=http://localhost:8000
+# Build arguments for Next.js environment variables
+# INTERNAL_BACKEND_URL: server-side proxy destination (baked at build, not exposed to browser)
+# NEXT_PUBLIC_API_BASE_URL: browser-side API base (empty = relative URLs through proxy)
+ARG INTERNAL_BACKEND_URL=http://localhost:8000
+ARG NEXT_PUBLIC_API_BASE_URL=
+ARG NEXT_PUBLIC_CHAT_API_URL=
 ARG NEXT_PUBLIC_OPENAI_DOMAIN_KEY=placeholder
 
 # Set environment variables for build
+ENV INTERNAL_BACKEND_URL=${INTERNAL_BACKEND_URL}
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_CHAT_API_URL=${NEXT_PUBLIC_CHAT_API_URL}
 ENV NEXT_PUBLIC_OPENAI_DOMAIN_KEY=${NEXT_PUBLIC_OPENAI_DOMAIN_KEY}

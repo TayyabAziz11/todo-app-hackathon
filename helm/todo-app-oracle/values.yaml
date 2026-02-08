@@ -1,0 +1,54 @@
+# Oracle Cloud Free Tier deployment values
+# Compatible with OKE (Oracle Kubernetes Engine) - 2 x VM.Standard.A1.Flex nodes
+
+namespace: todo-app
+
+backend:
+  image:
+    repository: docker.io/tayyabaziz11/todo-backend
+    tag: v5.0.0-oracle
+    pullPolicy: Always
+  replicaCount: 1
+  port: 8000
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  env:
+    DATABASE_URL: ""
+    JWT_SECRET_KEY: ""
+    JWT_ALGORITHM: "HS256"
+    JWT_EXPIRE_MINUTES: "60"
+    APP_ENV: "production"
+    LOG_LEVEL: "info"
+    CORS_ORIGINS: ""
+    FRONTEND_URL: ""
+    OPENAI_API_KEY: ""
+
+frontend:
+  image:
+    repository: docker.io/tayyabaziz11/todo-frontend
+    tag: v5.0.0-oracle
+    pullPolicy: Always
+  replicaCount: 1
+  port: 3000
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 3000
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "300m"
+  env:
+    NEXT_PUBLIC_API_BASE_URL: ""
+    NEXT_PUBLIC_CHAT_API_URL: ""
